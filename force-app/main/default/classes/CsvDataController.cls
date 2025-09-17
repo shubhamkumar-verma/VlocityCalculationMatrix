@@ -62,7 +62,6 @@ public with sharing class CsvDataController {
                     existingVersionNumbers.add((Integer) version.vlocity_ins__VersionNumber__c);
                 }
             }
-            
             System.debug('==== DEBUG: Existing version numbers: ' + existingVersionNumbers);
             
             // Find the first available version number starting from 1
