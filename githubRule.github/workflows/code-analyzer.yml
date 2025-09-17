@@ -6,6 +6,7 @@ on:
     branches:
       - main # Run when a PR targets the 'main' branch
     types: [opened, edited, synchronized, reopened] # Trigger on these PR events
+    workflow_dispatch: # <-- Add this line 
 
 # 2. Define a job for the code analysis
 jobs:

@@ -50,7 +50,6 @@ public with sharing class CsvDataController {
                 WHERE vlocity_ins__CalculationMatrixId__c = :calculationMatrixId
                 ORDER BY vlocity_ins__VersionNumber__c ASC
             ];
-            
             // If no versions exist, start with 1
             if (existingVersions.isEmpty()) {
                 System.debug('==== DEBUG: No existing versions, returning 1');
@@ -63,7 +62,6 @@ public with sharing class CsvDataController {
                     existingVersionNumbers.add((Integer) version.vlocity_ins__VersionNumber__c);
                 }
             }
-            
             System.debug('==== DEBUG: Existing version numbers: ' + existingVersionNumbers);
             
             // Find the first available version number starting from 1
@@ -159,7 +157,6 @@ public with sharing class CsvDataController {
             response.fileName = matrixVersion.Name + '_v' + matrixVersion.vlocity_ins__VersionNumber__c + '.csv';
             response.matrixVersionId = matrixVersionId;
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
-            
             return response;
             
         } catch (Exception e) {
@@ -199,7 +196,6 @@ public with sharing class CsvDataController {
             if (String.isBlank(matrixId)) {
                 matrixId = getOrCreateCalculationMatrix(matrixName);
             }
-            
             // Get the Calculation Matrix record to fetch its name
             vlocity_ins__CalculationMatrix__c calculationMatrix = [
                 SELECT Id, Name
