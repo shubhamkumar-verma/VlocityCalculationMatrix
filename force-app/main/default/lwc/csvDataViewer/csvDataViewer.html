@@ -1,0 +1,543 @@
+<template>
+    <!-- Loading Spinner -->
+    <template if:true={isLoading}>
+        <lightning-spinner
+            alternative-text="Processing..."
+            size="large"
+            variant="brand"
+            class="slds-is-fixed">
+        </lightning-spinner>
+    </template>
+    <!-- Main Application Card -->
+    <lightning-card title="Calculation Matrix CSV Viewer" icon-name="standard:matrix">
+        <div class="slds-p-around_medium">
+            
+            <!-- Version Selector Section -->
+            <template if:true={hasVersions}>
+                <template if:false={showPreview}>
+                    <div class="slds-box slds-m-bottom_medium" style="background-color: #f3f9ff; border-left: 4px solid #0070d2;">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-icon 
+                                    icon-name="utility:list" 
+                                    size="medium" 
+                                    variant="brand">
+                                </lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-right_medium">
+                                        <h2 class="slds-text-heading_small slds-m-bottom_x-small">Select an Existing Version</h2>
+                                        <p class="slds-text-body_small slds-text-color_weak">
+                                            Choose a previously uploaded version from the list to view its data.
+                                        </p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-top_small slds-medium-m-top_none">
+                                        <lightning-combobox
+                                            name="versionSelector"
+                                            label="Available Versions"
+                                            value={selectedVersionId}
+                                            placeholder="-- Select a version --"
+                                            options={matrixVersions}
+                                            onchange={handleVersionChange}
+                                            variant="label-stacked"
+                                            required>
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+            
+            <!-- File Upload Section -->
+            <template if:true={showUploadSection}>
+                <template if:false={showPreview}>
+                    <div class="slds-box slds-m-bottom_medium" style="background-color: #f3f9ff; border-left: 4px solid #0070d2;">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-icon 
+                                    icon-name="utility:upload" 
+                                    size="medium" 
+                                    variant="brand">
+                                </lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-right_medium">
+                                        <h2 class="slds-text-heading_small slds-m-bottom_x-small">Upload a New Version</h2>
+                                        <p class="slds-text-body_small slds-text-color_weak">
+                                            Create a new version by uploading a CSV file. Max file size: 5MB.
+                                        </p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-top_small slds-medium-m-top_none">
+                                        <lightning-input
+                                            label="Matrix Name"
+                                            value={matrixName}
+                                            onchange={handleMatrixNameChange}
+                                            required
+                                            class="slds-m-bottom_small">
+                                        </lightning-input>
+                                        <lightning-input
+                                            type="file"
+                                            label="Choose CSV File"
+                                            accept=".csv"
+                                            onchange={handleFileChange}
+                                            required>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+            <!-- Add Upload New Version Button when viewing existing data -->
+            <template if:true={showUploadNewButton}>
+                <div class="slds-grid slds-grid_align-end slds-m-bottom_medium">
+                    <lightning-button
+                        label="Upload New Version"
+                        onclick={handleUploadNewVersion}
+                        variant="brand"
+                        icon-name="utility:upload">
+                    </lightning-button>
+                </div>
+            </template>
+            <!-- Matrix Version Info Section -->
+            <template if:true={hasUploadedFile}>
+                <div class="slds-box slds-theme_shade slds-m-bottom_medium" style="background-color: #e8f4fd; border: 1px solid #1589ee;">
+                    <div class="slds-media slds-media_center">
+                        <div class="slds-media__figure">
+                            <lightning-icon 
+                                icon-name="utility:success" 
+                                size="small" 
+                                variant="brand">
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+                                    <p class="slds-text-body_regular slds-text-color_default">
+                                        <strong>{fileName}</strong> uploaded to Calculation Matrix
+                                    </p>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        {totalRecords} records • Matrix Name: {matrixName}
+                                    </p>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        Status: <strong>{isMatrixEnabled}</strong>
+                                    </p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_right slds-m-top_x-small slds-medium-m-top_none">
+                                    <div class="slds-grid slds-grid_align-end slds-grid_vertical-align-center">
+                                        <lightning-button
+                                            label={enableToggleLabel}
+                                            onclick={handleToggleMatrix}
+                                            variant={enableToggleVariant}
+                                            size="small"
+                                            class="slds-m-right_small">
+                                        </lightning-button>
+                                        <lightning-button-icon
+                                            icon-name="utility:delete"
+                                            alternative-text="Delete matrix version"
+                                            title="Delete matrix version"
+                                            onclick={handleRemoveMatrix}
+                                            variant="border"
+                                            size="small">
+                                        </lightning-button-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <!-- Error Display -->
+            <template if:true={errorMessage}>
+                <div class="slds-box slds-theme_error slds-m-bottom_medium">
+                    <div class="slds-media slds-media_center">
+                        <div class="slds-media__figure">
+                            <lightning-icon 
+                                icon-name="utility:error" 
+                                size="small" 
+                                variant="inverse">
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <p class="slds-text-color_inverse slds-text-body_regular">{errorMessage}</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+    <!-- Data Table Section -->
+    <template if:true={hasData}>
+        <lightning-card 
+            title={dataTableTitle}
+            icon-name="action:new_note"
+            class="slds-m-top_medium">
+            
+            <!-- Top Pagination Info (Actions Slot) -->
+            <div slot="actions">
+                <div class="slds-grid slds-grid_align-end slds-grid_vertical-align-center slds-wrap">
+                    <div class="slds-col slds-m-right_small slds-m-bottom_x-small slds-medium-m-bottom_none">
+                        <span class="slds-text-body_small slds-text-color_weak">
+                            Page {currentPage} of {totalPages} 
+                            ({totalRecords} total records)
+                        </span>
+                    </div>
+                    <div class="slds-col slds-no-flex">
+                        <lightning-button-group>
+                            <lightning-button
+                                label="Previous"
+                                onclick={handlePreviousPage}
+                                disabled={isFirstPage}
+                                variant="neutral"
+                                size="small">
+                            </lightning-button>
+                            <lightning-button
+                                label="Next"
+                                onclick={handleNextPage}
+                                disabled={isLastPage}
+                                variant="neutral"
+                                size="small">
+                            </lightning-button>
+                        </lightning-button-group>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-p-around_medium">
+                <!-- CSV Preview Save Section - MOVED HERE -->
+                <template if:true={showSaveVersionButton}>
+                    <div class="slds-box slds-theme_shade slds-m-bottom_medium" style="background-color: #e8f4fd; border: 1px solid #1589ee;">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-icon 
+                                    icon-name="utility:preview" 
+                                    size="small" 
+                                    variant="brand">
+                                </lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+                                        <p class="slds-text-body_regular slds-text-color_default">
+                                            <strong>CSV Preview Ready</strong>
+                                        </p>
+                                        <p class="slds-text-body_small slds-text-color_weak">
+                                            {totalRecords} data rows loaded and ready to save as a matrix version.
+                                        </p>
+                                        <template if:true={hasUnsavedChanges}>
+                                            <p class="slds-text-body_small slds-text-color_default">
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                                You have unsaved edits that will be included when saving.
+                                            </p>
+                                        </template>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_right slds-m-top_small slds-medium-m-top_none">
+                                        <div class="slds-grid slds-grid_align-end slds-grid_vertical-align-center">
+                                            <lightning-button
+                                                label="Save this Matrix Version"
+                                                onclick={handleSaveMatrixVersion}
+                                                variant="brand"
+                                                icon-name="utility:save"
+                                                size="small"
+                                                class="slds-m-right_small">
+                                            </lightning-button>
+                                            <lightning-button
+                                                label="Cancel"
+                                                onclick={handleCancelPreview}
+                                                variant="neutral"
+                                                icon-name="utility:close"
+                                                size="small">
+                                            </lightning-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Data Table Controls Section -->
+                <div class="slds-box slds-m-bottom_medium" style="background-color: #f3f9ff; border-left: 4px solid #0070d2;">
+                    <div class="slds-media slds-media_center">
+                        <div class="slds-media__figure">
+                            <lightning-icon 
+                                icon-name="utility:settings" 
+                                size="medium" 
+                                variant="brand">
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
+                                
+                                <!-- Left Side: Title and Description -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-right_medium">
+                                    <h2 class="slds-text-heading_small slds-m-bottom_x-small">Data Table Controls</h2>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        Adjust records per page, search data, and manage inline edits.
+                                    </p>
+                                    <template if:true={hasUnsavedChanges}>
+                                        <p class="slds-text-body_small slds-text-color_success slds-m-top_x-small">
+                                            <lightning-icon icon-name="utility:warning" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                            {unsavedChangesMessage}
+                                        </p>
+                                    </template>
+                                </div>
+
+                                <!-- Right Side: Form Controls -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-top_small slds-medium-m-top_none">
+                                    
+                                    <!-- Records per Page -->
+                                    <div class="slds-form-element slds-m-bottom_small">
+                                        <label class="slds-form-element__label" for="records-per-page">Records per page</label>
+                                        <div class="slds-form-element__control">
+                                            <lightning-combobox
+                                                name="pageSize"
+                                                value={pageSize}
+                                                options={pageSizeOptions}
+                                                onchange={handlePageSizeChange}
+                                                variant="label-hidden">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Search Data -->
+                                    <div class="slds-form-element slds-m-bottom_small">
+                                        <label class="slds-form-element__label" for="search-data">Search Data</label>
+                                        <div class="slds-form-element__control">
+                                            <lightning-input
+                                                type="search"
+                                                placeholder="Search..."
+                                                value={searchTerm}
+                                                onchange={handleSearchChange}
+                                                onkeypress={handleSearchKeyPress}
+                                                variant="label-hidden">
+                                            </lightning-input>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons Row -->
+                                    <template if:true={showEditControls}>
+                                        <div class="slds-grid slds-grid_align-end slds-m-top_small">
+                                            <div class="slds-col slds-no-flex">
+                                                <div class="slds-grid slds-gutters_x-small">
+                                                    <div class="slds-col">
+                                                        <lightning-button
+                                                            label={editButtonLabel}
+                                                            onclick={handleSaveEdits}
+                                                            variant={editButtonVariant}
+                                                            disabled={editButtonDisabled}
+                                                            icon-name="utility:save"
+                                                            size="small">
+                                                        </lightning-button>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <lightning-button
+                                                            label="Cancel Changes"
+                                                            onclick={handleCancelEdits}
+                                                            variant="neutral"
+                                                            disabled={editButtonDisabled}
+                                                            icon-name="utility:undo"
+                                                            size="small">
+                                                        </lightning-button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table with Enhanced Scrolling -->
+                <template if:true={tableColumns}>
+                    <template if:true={tableColumns.length}>
+                        <div class="slds-box slds-m-bottom_medium">
+                            <div class="slds-scrollable_x" style="max-height: 500px; overflow-y: auto; border: 1px solid #d8dde6; border-radius: 4px;">
+                                <lightning-datatable
+                                    key-field="rowNumber"
+                                    data={tableData}
+                                    columns={tableColumns}
+                                    hide-checkbox-column="true"
+                                    show-row-number-column="false"
+                                    resize-column-disabled="false"
+                                    sorted-by={sortedBy}
+                                    sorted-direction={sortedDirection}
+                                    onsort={handleSort}
+                                    max-row-selection="0"
+                                    draft-values={draftValues}
+                                    oncellchange={handleCellChange}
+                                    suppress-bottom-bar="true">
+                                </lightning-datatable>
+                            </div>
+                            
+                            <!-- Table Info -->
+                            <div class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+                                <lightning-formatted-text 
+                                    value="💡 Tip: Use horizontal scroll to view all columns. Drag column borders to resize."
+                                    class="slds-text-color_weak">
+                                </lightning-formatted-text>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+                <!-- Bottom Pagination Controls -->
+                <div class="slds-grid slds-grid_vertical-align-center slds-wrap slds-m-top_medium">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small slds-medium-m-bottom_none">
+                        <span class="slds-text-body_small slds-text-color_weak">
+                            Showing {startRecord} - {endRecord} of {totalRecords} records
+                        </span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-text-align_center slds-medium-text-align_right">
+                        <!-- Mobile-friendly pagination -->
+                        <div class="slds-hide slds-show_medium">
+                            <!-- Desktop pagination with all buttons -->
+                            <lightning-button-group>
+                                <lightning-button
+                                    label="First"
+                                    onclick={handleFirstPage}
+                                    disabled={isFirstPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Previous"
+                                    onclick={handlePreviousPage}
+                                    disabled={isFirstPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                                
+                                <lightning-button
+                                    label="Next"
+                                    onclick={handleNextPage}
+                                    disabled={isLastPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Last"
+                                    onclick={handleLastPage}
+                                    disabled={isLastPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                            </lightning-button-group>
+                        </div>
+                        
+                        <!-- Mobile pagination with fewer buttons -->
+                        <div class="slds-show slds-hide_medium">
+                            <lightning-button-group>
+                                <lightning-button
+                                    label="Prev"
+                                    onclick={handlePreviousPage}
+                                    disabled={isFirstPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Next"
+                                    onclick={handleNextPage}
+                                    disabled={isLastPage}
+                                    variant="neutral"
+                                    size="small">
+                                </lightning-button>
+                            </lightning-button-group>
+                        </div>
+                        
+                        <!-- Page Number Input (Desktop only) -->
+                        <div class="slds-hide slds-show_medium slds-m-top_x-small">
+                            <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center">
+                                <span class="slds-text-body_small slds-m-right_x-small">Go to page:</span>
+                                <div class="slds-size_1-of-6 slds-max-width_6rem">
+                                    <lightning-input
+                                        type="number"
+                                        value={currentPage}
+                                        min="1"
+                                        max={totalPages}
+                                        onchange={handlePageNumberChange}
+                                        variant="label-hidden">
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </lightning-card>
+    </template>
+    <!-- Show "No results found" if search yields no data -->
+    <template if:true={isNoSearchResults}>
+        <div class="slds-text-color_error slds-m-top_small">
+            No results found for "{searchTerm}".
+        </div>
+    </template>
+    
+    <!-- Column Configuration Modal -->
+    <template if:true={showColumnConfig}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={handleCancelColumnConfig}>
+                        <lightning-icon icon-name="utility:close" alternative-text="Close" size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Configure Matrix Columns</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <p class="slds-text-body_small slds-m-bottom_medium">
+                        Specify which columns are Inputs and which are Outputs, and select the appropriate data type for each column.
+                    </p>
+                    
+                    <div class="slds-grid slds-grid_vertical">
+                        <div class="slds-col slds-border_bottom slds-p-bottom_small slds-grid slds-grid_align-spread">
+                            <div class="slds-size_1-of-3 slds-p-right_x-small"><strong>Column Name</strong></div>
+                            <div class="slds-size_1-of-3 slds-p-right_x-small"><strong>Header Type</strong></div>
+                            <div class="slds-size_1-of-3"><strong>Data Type</strong></div>
+                        </div>
+                        
+                        <template for:each={columnConfigurations} for:item="config" for:index="index">
+                            <div key={config.name} class="slds-col slds-border_bottom slds-p-vertical_small slds-grid slds-grid_align-spread">
+                                <div class="slds-size_1-of-3 slds-p-right_x-small slds-truncate" title={config.name}>
+                                    {config.name}
+                                </div>
+                                <div class="slds-size_1-of-3 slds-p-right_x-small">
+                                    <lightning-combobox
+                                        label="Header Type"
+                                        label-hidden
+                                        value={config.headerType}
+                                        options={headerTypeOptions}
+                                        data-index={index}
+                                        onchange={handleHeaderTypeChange}
+                                        class="header-type-selector"
+                                    ></lightning-combobox>
+                                </div>
+                                <div class="slds-size_1-of-3">
+                                    <lightning-combobox
+                                        label="Data Type"
+                                        label-hidden
+                                        value={config.dataType}
+                                        options={dataTypeOptions}
+                                        data-index={index}
+                                        onchange={handleDataTypeChange}
+                                        class="data-type-selector"
+                                    ></lightning-combobox>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={handleCancelColumnConfig}>Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={handleSaveColumnConfig}>Save Configuration</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

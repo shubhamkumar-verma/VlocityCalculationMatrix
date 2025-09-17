@@ -1,0 +1,50 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state slds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap slds-p-around_x-small slds-m-bottom_x-small " style="             ">
+          <div class="slds-col   slds-size_12-of-12 " style="">
+    <vlocity_ins-custom-lwc-wrapper element-name="vlocity_ins-ins-policy-transactions" property='\{"componentData":"{record}","listSize":"5"}' records={records} record={record} record-id={recordId} card={card}><vlocity_ins-ins-policy-transactions  component-data={record} ></vlocity_ins-ins-policy-transactions></vlocity_ins-custom-lwc-wrapper>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state slds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap slds-p-around_x-small slds-m-bottom_x-small " style="             ">
+          <div class="slds-col   slds-size_12-of-12 " style="">
+    <vlocity_ins-custom-lwc-wrapper element-name="vlocity_ins-ins-policy-transactions" property='\{"componentData":"{record}","listSize":"5"}' records={records} record={record} record-id={recordId} card={card}><vlocity_ins-ins-policy-transactions  component-data={record} ></vlocity_ins-ins-policy-transactions></vlocity_ins-custom-lwc-wrapper>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

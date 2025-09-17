@@ -1,0 +1,56 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card  nds-color__text_gray-11 nds-p-vertical_large" style="background-color:#FFFFFF;             ">
+          <div class="nds-col  nds-text-heading_large  nds-m-bottom_x-small nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EManage%20Account%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"View Billing Info","id":"flex-action-1605794725980","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KBAAA","Name":"Account Servicing/NewBusiness/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Update Contact Methods","id":"flex-action-1605794787333","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KCAAQ","Name":"Account Servicing/NewBusinessQuote/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Print ID Cards","id":"flex-action-1605794817114","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KBAAA","Name":"Account Servicing/NewBusiness/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Change Address","id":"flex-action-1605794849331","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KCAAQ","Name":"Account Servicing/NewBusinessQuote/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card  nds-color__text_gray-11 nds-p-vertical_large" style="background-color:#FFFFFF;             ">
+          <div class="nds-col  nds-text-heading_large  nds-m-bottom_x-small nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EManage%20Account%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"View Billing Info","id":"flex-action-1605794725980","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KBAAA","Name":"Account Servicing/NewBusiness/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Update Contact Methods","id":"flex-action-1605794787333","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KCAAQ","Name":"Account Servicing/NewBusinessQuote/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Print ID Cards","id":"flex-action-1605794817114","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KBAAA","Name":"Account Servicing/NewBusiness/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-text-heading_small nds-text-link nds-m-bottom_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{User.userAccountId}"  hide-action-icon="true"  state-action='\{"displayName":"Change Address","id":"flex-action-1605794849331","isLwcOS":false,"layoutType":"newport","omniType":{"Id":"a25Hu000008d3KCAAQ","Name":"Account Servicing/NewBusinessQuote/English","isLwcOs":false},"openUrlIn":"Current Window","type":"OmniScript","vForcewithNsPrefix":"vlocity_ins__OmniScriptUniversalPage","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

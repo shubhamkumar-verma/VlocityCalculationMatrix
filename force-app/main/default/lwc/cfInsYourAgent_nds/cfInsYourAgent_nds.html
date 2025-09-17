@@ -1,0 +1,78 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-agent nds-color__text_gray-11 nds-p-vertical--medium " style="background-color:#ffffff;             ">
+          <div class="nds-col  nds-m-bottom_medium nds-page-header__title nds-color__text_gray-11 nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EYour%20Agent%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-rounded-image nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker.Image","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3E%7BPrimaryBroker.Image%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-rounded-image nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-flex-icon     record={record}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-7","operator":"==","type":"custom","value":"undefined"},{"field":"PrimaryBroker.Image","id":"state-new-condition-14","logicalOperator":"||","operator":"==","type":"custom","value":""}],"id":"state-condition-object","isParent":true}'  extraclass="slds-icon-action-user nds-icon_xx-large"  icon-name="action:user"  icon-type="Salesforce SVG"  imgsrc=""  size="large"  variant="inverse"  theme="nds"  ></vlocity_ins-flex-icon>
+      </div><div class="nds-col   nds-p-left--medium  nds-large-size_9-of-12 nds-medium-size_9-of-12 nds-small-size_8-of-12 nds-size_8-of-12  condition-element" style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  data-conditions='\{"group":[],"id":"state-condition-object","isParent":true}'  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold nds-m-bottom--small   nds-color__text_gray-11 nds-size_11-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-58","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  field-name="Name"  placeholder=""  styles='\{"label":{"color":"","fontSize":""},"value":{"color":"","fontSize":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-size_8-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-65","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  field-name="agentDetails"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-size_12-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-72","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3E%7BPrimaryBroker.Phone%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-around_x-small nds-m-top_medium  nds-size_12-of-12  condition-element" style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-45","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-border_right nds-text-link nds-large-size_2-of-12 nds-medium-size_2-of-12 nds-small-size_2-of-12 nds-size_2-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"mailto:{PrimaryBroker.Email}"},"displayName":"Email","id":"flex-action-1603354110291","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  styles='\{"label":{"color":""}}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-text-link nds-p-left--small nds-size_2-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"http://{PrimaryBroker.WebSite}"},"displayName":"Website","id":"flex-action-1603355674089","openUrlIn":"New Tab/Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  styles='\{"label":{"color":""}}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-agent nds-color__text_gray-11 nds-p-vertical--medium " style="background-color:#ffffff;             ">
+          <div class="nds-col  nds-m-bottom_medium nds-page-header__title nds-color__text_gray-11 nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EYour%20Agent%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-rounded-image nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker.Image","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3E%7BPrimaryBroker.Image%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-rounded-image nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-flex-icon     record={record}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-7","operator":"==","type":"custom","value":"undefined"},{"field":"PrimaryBroker.Image","id":"state-new-condition-14","logicalOperator":"||","operator":"==","type":"custom","value":""}],"id":"state-condition-object","isParent":true}'  extraclass="slds-icon-action-user nds-icon_xx-large"  icon-name="action:user"  icon-type="Salesforce SVG"  imgsrc=""  size="large"  variant="inverse"  theme="nds"  ></vlocity_ins-flex-icon>
+      </div><div class="nds-col   nds-p-left--medium  nds-large-size_9-of-12 nds-medium-size_9-of-12 nds-small-size_8-of-12 nds-size_8-of-12  condition-element" style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  data-conditions='\{"group":[],"id":"state-condition-object","isParent":true}'  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold nds-m-bottom--small   nds-color__text_gray-11 nds-size_11-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-58","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  field-name="Name"  placeholder=""  styles='\{"label":{"color":"","fontSize":""},"value":{"color":"","fontSize":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-size_8-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-65","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  field-name="agentDetails"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-size_12-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-72","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3E%7BPrimaryBroker.Phone%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-around_x-small nds-m-top_medium  nds-size_12-of-12  condition-element" style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  data-conditions='\{"group":[{"field":"PrimaryBroker","id":"state-new-condition-45","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-border_right nds-text-link nds-large-size_2-of-12 nds-medium-size_2-of-12 nds-small-size_2-of-12 nds-size_2-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"mailto:{PrimaryBroker.Email}"},"displayName":"Email","id":"flex-action-1603354110291","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  styles='\{"label":{"color":""}}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-text-link nds-p-left--small nds-size_2-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"http://{PrimaryBroker.WebSite}"},"displayName":"Website","id":"flex-action-1603355674089","openUrlIn":"New Tab/Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  styles='\{"label":{"color":""}}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

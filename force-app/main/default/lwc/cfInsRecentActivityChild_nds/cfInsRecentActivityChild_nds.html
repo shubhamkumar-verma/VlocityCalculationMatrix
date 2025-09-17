@@ -1,0 +1,104 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card" style="             ">
+          <div class="nds-col   nds-timeline__item nds-timeline__media nds-m-bottom_medium nds-p-around_x-small nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-align-middle nds-activity-circle nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_1-of-12 nds-size_1-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-activity-feed-card_item__date nds-align-middle nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_3-of-12 nds-size_3-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Date"  format="MMM DD, YYYY"  placeholder=""  type="date"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-box nds-text-heading_small  nds-large-size_9-of-12 nds-medium-size_9-of-12 nds-small-size_9-of-12 nds-size_9-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_11-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium nds-text--uppercase nds-size_12-of-12  " style="             text-transform:uppercase;"><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BTitle%7D%20%7BSubtitle%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium_bold  nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Status"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-align-middle nds-text-link nds-m-top_x-small nds-size_1-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{Id}"  hide-action-icon="true"  state-action='\{"Record":{"targetAction":"view","targetId":"{Id}","targetName":"{TargetType}"},"displayName":"Details","id":"flex-action-1606283503385","openUrlIn":"New Tab/Window","targetType":"Record","type":"Custom","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap " style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card" style="             ">
+          <div class="nds-col   nds-timeline__item nds-timeline__media nds-m-bottom_medium nds-p-around_x-small nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-align-middle nds-activity-circle nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_1-of-12 nds-size_1-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-activity-feed-card_item__date nds-align-middle nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_3-of-12 nds-size_3-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Date"  format="MMM DD, YYYY"  placeholder=""  type="date"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-box nds-text-heading_small  nds-large-size_9-of-12 nds-medium-size_9-of-12 nds-small-size_9-of-12 nds-size_9-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_11-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium nds-text--uppercase nds-size_12-of-12  " style="             text-transform:uppercase;"><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BTitle%7D%20%7BSubtitle%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium_bold  nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Status"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-align-middle nds-text-link nds-m-top_x-small nds-size_1-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  context-id="\{Id}"  hide-action-icon="true"  state-action='\{"Record":{"targetAction":"view","targetId":"{Id}","targetName":"{TargetType}"},"displayName":"Details","id":"flex-action-1606283503385","openUrlIn":"New Tab/Window","targetType":"Record","type":"Custom","vlocityIcon":""}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap " style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

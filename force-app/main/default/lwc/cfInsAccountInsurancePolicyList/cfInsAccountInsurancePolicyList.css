@@ -1,0 +1,19 @@
+.vloc-communities-policy-row-field {
+    font-size: 10pt;
+}
+
+@media screen and (min-width: 768px) {
+    .vloc-communities-policy-row-field  {
+        text-align: left;
+        font-size: 9.5pt;
+    }
+}
+
+@media screen and (max-width: 480px) {
+     .vloc-account-policy-card-container {
+        padding: var(--lwc-spacingSmall, 0.75rem);
+    }
+    .vloc-communities-policy-row-field  {
+        font-size: 9.5pt;
+    }
+}

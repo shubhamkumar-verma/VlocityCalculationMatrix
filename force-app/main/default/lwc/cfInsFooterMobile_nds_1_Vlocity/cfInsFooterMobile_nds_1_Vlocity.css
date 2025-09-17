@@ -1,0 +1,19 @@
+.nds-communities-footer.nds-ins-footer_mobile .label-color-onexpand {
+  color: #fff; }
+
+.nds-communities-footer.nds-ins-footer_mobile .blockSlot {
+  margin-left: 1.57rem; }
+
+.nds-communities-footer.nds-ins-footer_mobile .blockLabel:before {
+  content: "-";
+  font-size: 1.57rem;
+  margin-right: 1rem;
+  position: relative;
+  top: 0.1rem;
+  font-weight: bold; }
+
+.nds-communities-footer.nds-ins-footer_mobile .blockLabel.label-color-onexpand:before {
+  content: "+"; }
+
+.nds-communities-footer.nds-ins-footer_mobile .nds-icon {
+  display: none; }

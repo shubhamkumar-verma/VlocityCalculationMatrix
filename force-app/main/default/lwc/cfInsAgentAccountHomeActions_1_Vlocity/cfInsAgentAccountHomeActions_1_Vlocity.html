@@ -1,0 +1,52 @@
+<template>
+            <div class="slds-grid slds-wrap slds-is-relative">
+            <div if:false={cardLoaded} class="slds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="medium"
+      theme="slds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state slds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="slds-grid slds-wrap slds-p-around_medium slds-m-bottom_x-small slds-m-around_x-small slds-card" style="     border-color:#cccccc; border-width:1px;  border-style:solid;     box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 2px 0px;">
+          <div class="slds-col  slds-m-bottom--x-large slds-color__text_gray-11  slds-size_12-of-12  " style=""><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22slds-text-heading_medium%22%3EGet%20a%20Quote%3C/div%3E"  theme="slds"  ></vlocity_ins-output-field>
+      </div><div class="slds-col   slds-size_12-of-12  " style="             "><vlocity_ins-flex-menu  onupdateos={updateOmniscript} onsetvalue={updateAction}     record={record}  card={card}  flyout-obj='\{}'  icon-name="utility:down"  icon-position="right"  icon-size="x-small"  label=""  menu-items='\[]'  overflow="true"  position="left"  size="large"  type="action"  variant="neutral"  theme="slds"  ></vlocity_ins-flex-menu>
+      </div><div class="slds-col  slds-m-vertical_small slds-button slds-button_brand slds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EGet%20a%20quote&nbsp;%3C/div%3E"  theme="slds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state slds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="slds-grid slds-wrap slds-p-around_medium slds-m-bottom_x-small slds-m-around_x-small slds-card" style="     border-color:#cccccc; border-width:1px;  border-style:solid;     box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 2px 0px;">
+          <div class="slds-col  slds-m-bottom--x-large slds-color__text_gray-11  slds-size_12-of-12  " style=""><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22slds-text-heading_medium%22%3EGet%20a%20Quote%3C/div%3E"  theme="slds"  ></vlocity_ins-output-field>
+      </div><div class="slds-col   slds-size_12-of-12  " style="             "><vlocity_ins-flex-menu  onupdateos={updateOmniscript} onsetvalue={updateAction}     record={record}  card={card}  flyout-obj='\{}'  icon-name="utility:down"  icon-position="right"  icon-size="x-small"  label=""  menu-items='\[]'  overflow="true"  position="left"  size="large"  type="action"  variant="neutral"  theme="slds"  ></vlocity_ins-flex-menu>
+      </div><div class="slds-col  slds-m-vertical_small slds-button slds-button_brand slds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EGet%20a%20quote&nbsp;%3C/div%3E"  theme="slds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

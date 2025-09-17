@@ -1,0 +1,106 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                      <vlocity_ins-flex-card-state   data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-footer nds-ins-footer_mobile nds-hide_small " style="             ">
+          <div class="nds-col   ins-mobile nds-m-bottom_large  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-around_x-small  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\null'  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  condition-element" style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="true"  data-conditions='\{"group":[],"id":"state-condition-object","isParent":true}'  label="Connect"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Comments or Questions","id":"flex-action-1606397000752","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Report issues","id":"flex-action-1606397019816","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"About Us","id":"flex-action-1606397029588","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-truncate nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Contact Us","id":"flex-action-1606397055864","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  " style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="true"  collapsible="true"  label="Shop"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Homeowners Quote","id":"flex-action-1606397072007","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Auto Insurance Quote","id":"flex-action-1606397094385","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Business Owners Policy Quote","id":"flex-action-1606397121871","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Watercraft Quote","id":"flex-action-1606397110924","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  " style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="true"  collapsible="true"  label="Help & Support"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Insurance Basics","id":"flex-action-1606397151587","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Technical Help","id":"flex-action-1606397160993","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Privacy and Security","id":"flex-action-1606397177819","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                </template>
+                <template if:false={hasRecords}>
+                      <vlocity_ins-flex-card-state   data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-footer nds-ins-footer_mobile nds-hide_small " style="             ">
+          <div class="nds-col   ins-mobile nds-m-bottom_large  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-around_x-small  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\null'  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  condition-element" style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="true"  data-conditions='\{"group":[],"id":"state-condition-object","isParent":true}'  label="Connect"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Comments or Questions","id":"flex-action-1606397000752","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Report issues","id":"flex-action-1606397019816","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"About Us","id":"flex-action-1606397029588","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-truncate nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Contact Us","id":"flex-action-1606397055864","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  " style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="true"  collapsible="true"  label="Shop"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Homeowners Quote","id":"flex-action-1606397072007","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Auto Insurance Quote","id":"flex-action-1606397094385","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Business Owners Policy Quote","id":"flex-action-1606397121871","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Watercraft Quote","id":"flex-action-1606397110924","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-action_text nds-text-title_caps nds-text-color_inverse nds-border_bottom nds-p-left_small nds-p-vertical_x-large  nds-size_12-of-12  " style="     border-color:#cccccc;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="true"  collapsible="true"  label="Help & Support"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Insurance Basics","id":"flex-action-1606397151587","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Technical Help","id":"flex-action-1606397160993","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col  nds-action_text nds-text-title_caps nds-text-color_inverse nds-p-bottom_small  nds-size_12-of-12  " style="             font-weight:100"><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Privacy and Security","id":"flex-action-1606397177819","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

@@ -1,0 +1,172 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-m-bottom_medium nds-communities-policy-card" style="             ">
+          <div class="nds-col   nds-card nds-panel nds-communities-billing nds-communities-article nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-m-vertical--medium  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_right nds-show_small nds-p-around--medium nds-large-size_4-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-communities-billing_amountDue nds-large-size_12-of-12  nds-medium-size_6-of-12  nds-small-size_12-of-12  nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AmountDue"  placeholder=""  styles='\{"label":{"fontSize":""},"value":{"fontSize":"","textAlign":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom   nds-large-size_12-of-12  nds-medium-size_6-of-12  nds-small-size_12-of-12  nds-size_12-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"BillDueDate","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-m-top_large nds-size_12-of-12  " style="             "><vlocity_ins-cf-ins-policy-billing-child_nds  tracking-obj={_childCardTrackingObj}   parent-data={_dataNode}  records={_records}  parent-record={record}  record-id={recordId}  is-child-card-tracking-enabled="false"  theme="nds"  onupdateparent={updateParentData}></vlocity_ins-cf-ins-policy-billing-child_nds>
+    </div><div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-button nds-button_brand   nds-text-align_center nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Make a Payment","id":"flex-action-1604932837371","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-button nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"View Statement","id":"flex-action-1604932855988","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_none  nds-hide_small nds-p-around--medium nds-large-size_4-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-communities-billing_amountDue nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AmountDue"  placeholder=""  styles='\{"label":{"fontSize":""},"value":{"fontSize":"","textAlign":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom  nds-text-align_right nds-show_small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom  nds-text-align_left nds-hide_small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-around_x-small nds-size_12-of-12 " style="">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-button nds-button_brand   nds-text-align_center nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Make a Payment","id":"flex-action-1604932837371","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-button nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"View Statement","id":"flex-action-1604932855988","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-around--medium nds-large-size_8-of-12 nds-medium-size_7-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-bottom--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EBilling%20Account%20Number%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-p-bottom--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AccountNumber"  label=""  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-vertical--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ECard%20Type%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-vertical--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="CardType"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-p-vertical--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPayment%20Method%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-vertical--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="PaymentMethodName"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-button nds-p-vertical--small nds-text-align_left  nds-large-size_3-of-12 nds-medium-size_4-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Manage Payment Details","id":"flex-action-1604932893679","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-size_12-of-12 " style=""><vlocity_ins-cf-ins-billing-strategy-child_nds  tracking-obj={_childCardTrackingObj}   parent-data={_dataNode}  records={_records}  parent-record={record}  record-id={recordId}  is-child-card-tracking-enabled="false"  theme="nds"  onupdateparent={updateParentData}></vlocity_ins-cf-ins-billing-strategy-child_nds>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-m-bottom_medium nds-communities-article nds-p-around_small " style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-m-bottom_medium nds-communities-policy-card" style="             ">
+          <div class="nds-col   nds-card nds-panel nds-communities-billing nds-communities-article nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-m-vertical--medium  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_right nds-show_small nds-p-around--medium nds-large-size_4-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-communities-billing_amountDue nds-large-size_12-of-12  nds-medium-size_6-of-12  nds-small-size_12-of-12  nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AmountDue"  placeholder=""  styles='\{"label":{"fontSize":""},"value":{"fontSize":"","textAlign":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom   nds-large-size_12-of-12  nds-medium-size_6-of-12  nds-small-size_12-of-12  nds-size_12-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"BillDueDate","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-m-top_large nds-size_12-of-12  " style="             "><vlocity_ins-cf-ins-policy-billing-child_nds  tracking-obj={_childCardTrackingObj}   parent-data={_dataNode}  records={_records}  parent-record={record}  record-id={recordId}  is-child-card-tracking-enabled="false"  theme="nds"  onupdateparent={updateParentData}></vlocity_ins-cf-ins-policy-billing-child_nds>
+    </div><div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-button nds-button_brand   nds-text-align_center nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Make a Payment","id":"flex-action-1604932837371","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-button nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"View Statement","id":"flex-action-1604932855988","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_none  nds-hide_small nds-p-around--medium nds-large-size_4-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-communities-billing_amountDue nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AmountDue"  placeholder=""  styles='\{"label":{"fontSize":""},"value":{"fontSize":"","textAlign":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom  nds-text-align_right nds-show_small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-align-bottom  nds-text-align_left nds-hide_small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EDue%20%7BBillDueDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-around_x-small nds-size_12-of-12 " style="">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-button nds-button_brand   nds-text-align_center nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Make a Payment","id":"flex-action-1604932837371","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div><div class="nds-col   nds-button nds-m-top--large nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  icon-size="xx-small"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"View Statement","id":"flex-action-1604932855988","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-around--medium nds-large-size_8-of-12 nds-medium-size_7-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom  nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-bottom--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EBilling%20Account%20Number%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-p-bottom--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="AccountNumber"  label=""  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-p-vertical--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ECard%20Type%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-vertical--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="CardType"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-p-vertical--x-small nds-text-body_medium_bold nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPayment%20Method%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-p-vertical--x-small nds-text-body_medium nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="PaymentMethodName"  placeholder=""  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-button nds-p-vertical--small nds-text-align_left  nds-large-size_3-of-12 nds-medium-size_4-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"Web Page":{"targetName":"/apex"},"displayName":"Manage Payment Details","id":"flex-action-1604932893679","openUrlIn":"Current Window","targetType":"Web Page","type":"Custom","vlocityIcon":"standard-default"}'  theme="nds" ></vlocity_ins-action>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-size_12-of-12 " style=""><vlocity_ins-cf-ins-billing-strategy-child_nds  tracking-obj={_childCardTrackingObj}   parent-data={_dataNode}  records={_records}  parent-record={record}  record-id={recordId}  is-child-card-tracking-enabled="false"  theme="nds"  onupdateparent={updateParentData}></vlocity_ins-cf-ins-billing-strategy-child_nds>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-m-bottom_medium nds-communities-article nds-p-around_small " style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

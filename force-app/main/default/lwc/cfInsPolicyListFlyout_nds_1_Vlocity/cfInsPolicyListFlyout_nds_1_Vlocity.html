@@ -1,0 +1,114 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities nds-communities-policy-list nds-communities-policy-card  nds-communities-policy-list_flyout" style="             ">
+          <div class="nds-col   slds-text-link_reset   nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\{"actionData":{"card":"{card}","contextId":"\\{Id}","sObjectType":"Asset","stateAction":{"displayName":"Go to policy","hasExtraParams":false,"id":"flex-action-1605014426456","name":"np-policy-view","openUrlIn":"Current Window","type":"Vlocity Action","vlocityIcon":"icon-v-document1-line"},"stateObj":"{record}"},"eventType":"onclick","iconName":"standard-default","label":"Action","name":""}'  collapsed-by-default="false"  collapsible="false"  label="Block"  extraclass=" nds-text-link_reset"  theme="nds" onclick={executeAction} data-action-index="index0"><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-communities-policy-list-fields nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_6-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-body_small%20nds-text-heading_small%22%3EPremium%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalPremiumForTerm"  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-heading_small%22%3ETaxes%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TaxAmount"  label=""  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-heading_small%22%3EFees%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="FeeAmount"  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities nds-communities-policy-list nds-communities-policy-card  nds-communities-policy-list_flyout" style="             ">
+          <div class="nds-col   slds-text-link_reset   nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\{"actionData":{"card":"{card}","contextId":"\\{Id}","sObjectType":"Asset","stateAction":{"displayName":"Go to policy","hasExtraParams":false,"id":"flex-action-1605014426456","name":"np-policy-view","openUrlIn":"Current Window","type":"Vlocity Action","vlocityIcon":"icon-v-document1-line"},"stateObj":"{record}"},"eventType":"onclick","iconName":"standard-default","label":"Action","name":""}'  collapsed-by-default="false"  collapsible="false"  label="Block"  extraclass=" nds-text-link_reset"  theme="nds" onclick={executeAction} data-action-index="index1"><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-communities-policy-list-fields nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col    nds-size_6-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-body_small%20nds-text-heading_small%22%3EPremium%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalPremiumForTerm"  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-heading_small%22%3ETaxes%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TaxAmount"  label=""  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-p-vertical_medium nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-p-top_xx-small nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%20class=%22nds-text-body_regular%22%3E%3Cstrong%20class=%22nds-text-heading_small%22%3EFees%3C/strong%3E%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-color__text_gray-11  nds-text-heading_medium  nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="FeeAmount"  locale=""  placeholder=""  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

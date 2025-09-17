@@ -1,0 +1,66 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-hero nds-show_small nds-communities-card nds-p-top--none nds-p-bottom--none " style="             ">
+          <div class="nds-col   nds-p-around--xx-large nds-hero  nds-size_12-of-12  " style="background-color:#0070D2; background-image:url(../resource/InsNewportPortalImages/insHomeHeaderDesktop.png); background-repeat:no-repeat;  background-position: bottom right;         ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-hero_container-inner nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-col nds-text-heading_medium nds-text-align_left nds-m-top_xx-large  nds-text-color--inverse nds-text_bold nds-font-size-xxx-large nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EWelcome%20Back,%20%7BName%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-text-align_left  nds-text-body_medium_light nds-p-top--small nds-m-bottom--xx-large nds-text-color--inverse nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EValued%20member%20since%20%7BCreatedDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-hero nds-show_small nds-communities-card nds-p-top--none nds-p-bottom--none " style="             ">
+          <div class="nds-col   nds-p-around--xx-large nds-hero  nds-size_12-of-12  " style="background-color:#0070D2; background-image:url(../resource/InsNewportPortalImages/insHomeHeaderDesktop.png); background-repeat:no-repeat;  background-position: bottom right;         ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-hero_container-inner nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-col nds-text-heading_medium nds-text-align_left nds-m-top_xx-large  nds-text-color--inverse nds-text_bold nds-font-size-xxx-large nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EWelcome%20Back,%20%7BName%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-text-align_left  nds-text-body_medium_light nds-p-top--small nds-m-bottom--xx-large nds-text-color--inverse nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EValued%20member%20since%20%7BCreatedDate%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

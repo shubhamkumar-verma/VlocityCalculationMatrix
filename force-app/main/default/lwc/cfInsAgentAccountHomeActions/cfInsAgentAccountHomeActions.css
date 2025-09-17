@@ -1,0 +1,15 @@
+.slds-dropdown-trigger.slds-dropdown-trigger_click {
+            display: block;
+        }
+        button.slds-button.vlocity-btn {
+            min-width: 100%;
+            text-align: left;
+            padding: 5px;
+            border-radius: 4px;
+            display:inline-block;
+        }
+        .slds-dropdown_actions {           
+             min-width: 100%;
+            max-width: 100%;
+           
+        }

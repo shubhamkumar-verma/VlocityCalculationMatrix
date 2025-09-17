@@ -1,0 +1,9 @@
+@media screen and (max-width: 30rem) {
+
+    .nds-communities-policy-list_flyout {
+        .nds-text-heading_medium {
+            font-size: .875rem !important;
+            padding-top: .25rem;
+        }
+    }
+}

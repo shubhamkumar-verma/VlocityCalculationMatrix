@@ -1,0 +1,118 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-state" style="             ">
+          <div class="nds-col    nds-p-vertical_medium nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Auto Theft"},{"field":"LossCause","id":"state-new-condition-2","logicalOperator":"||","operator":"==","type":"custom","value":"Collision"},{"field":"LossCause","id":"state-new-condition-18","logicalOperator":"||","operator":"==","type":"custom","value":"Auto Accident"},{"field":"LossCause","id":"state-new-condition-43","logicalOperator":"||","operator":"==","type":"custom","value":"3rd Party Injury"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/incident.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Flooding"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/flooding.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Glass Claim"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/glass.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Fire"},{"field":"LossCause","id":"state-new-condition-71","logicalOperator":"||","operator":"==","type":"custom","value":"Animal"},{"field":"LossCause","id":"state-new-condition-87","logicalOperator":"||","operator":"==","type":"custom","value":"Vandalism"},{"field":"LossCause","id":"state-new-condition-108","logicalOperator":"||","operator":"==","type":"custom","value":"Property Theft"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/homeowners.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-p-left_large nds-large-size_11-of-12 nds-medium-size_11-of-12 nds-small-size_10-of-12 nds-size_10-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   slds-text-link_reset   nds-large-size_7-of-12 nds-medium-size_7-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\{"actionData":{"card":"{card}","stateAction":{"Record":{"targetAction":"view","targetId":"{Id}","targetName":"Claim"},"displayName":"Action","id":"flex-action-1610644058904","openUrlIn":"Current Window","targetType":"Record","type":"Custom","vlocityIcon":"standard-default"},"stateObj":"{record}"},"eventType":"onclick","iconName":"standard-default","label":"Action","name":""}'  collapsed-by-default="false"  collapsible="false"  label="Block"  extraclass=" nds-text-link_reset"  theme="nds" onclick={executeAction} data-action-index="index0"><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-heading_small nds-text-link nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BName%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_5-of-12 nds-size_5-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ReportedDate","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3EReported:%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-large-size_7-of-12 nds-medium-size_7-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="ReportedDate"  format="MMM DD, YYYY"  placeholder=""  styles='\{"value":{"color":""}}'  type="date"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-align-middle nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium nds-p-vertical_xxx-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalAmount"  locale=""  placeholder=""  styles='\{"value":{"color":"","fontSize":""}}'  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-align-middle  nds-communities-status-toast nds-large-size_2-of-12 nds-medium-size_2-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-theme_warning nds-text-align_center nds-button nds-text-color_inverse  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-0","operator":"==","type":"custom","value":"Draft"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-theme_shade nds-text-align_center nds-button nds-text-color_weak  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-0","operator":"==","type":"custom","value":"Closed"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-theme_success nds-text-align_center nds-button  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-203","operator":"!=","type":"custom","value":"Draft"},{"field":"ClaimStatus","id":"state-new-condition-41","logicalOperator":"&&","operator":"!=","type":"custom","value":"Closed"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-state" style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-state" style="             ">
+          <div class="nds-col    nds-p-vertical_medium nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Auto Theft"},{"field":"LossCause","id":"state-new-condition-2","logicalOperator":"||","operator":"==","type":"custom","value":"Collision"},{"field":"LossCause","id":"state-new-condition-18","logicalOperator":"||","operator":"==","type":"custom","value":"Auto Accident"},{"field":"LossCause","id":"state-new-condition-43","logicalOperator":"||","operator":"==","type":"custom","value":"3rd Party Injury"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/incident.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Flooding"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/flooding.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Glass Claim"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/glass.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-large-size_1-of-12 nds-medium-size_1-of-12 nds-small-size_2-of-12 nds-size_2-of-12  condition-element" style="             "><vlocity_ins-flex-img   card={card}  record={record}  data-conditions='\{"group":[{"field":"LossCause","id":"state-new-condition-0","operator":"==","type":"custom","value":"Fire"},{"field":"LossCause","id":"state-new-condition-71","logicalOperator":"||","operator":"==","type":"custom","value":"Animal"},{"field":"LossCause","id":"state-new-condition-87","logicalOperator":"||","operator":"==","type":"custom","value":"Vandalism"},{"field":"LossCause","id":"state-new-condition-108","logicalOperator":"||","operator":"==","type":"custom","value":"Property Theft"}],"id":"state-condition-object","isParent":true}'  extraclass="nds-icon_large nds-align_absolute-center"  img-height=""  img-width=""  size=""  state-img='\{"alternativeText":"","imgsrc":"/resource/{nsPrefix}newport/assets/images/communities/homeowners.svg"}'  theme="nds"  ></vlocity_ins-flex-img>
+      </div><div class="nds-col   nds-p-left_large nds-large-size_11-of-12 nds-medium-size_11-of-12 nds-small-size_10-of-12 nds-size_10-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   slds-text-link_reset   nds-large-size_7-of-12 nds-medium-size_7-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  action='\{"actionData":{"card":"{card}","stateAction":{"Record":{"targetAction":"view","targetId":"{Id}","targetName":"Claim"},"displayName":"Action","id":"flex-action-1610644058904","openUrlIn":"Current Window","targetType":"Record","type":"Custom","vlocityIcon":"standard-default"},"stateObj":"{record}"},"eventType":"onclick","iconName":"standard-default","label":"Action","name":""}'  collapsed-by-default="false"  collapsible="false"  label="Block"  extraclass=" nds-text-link_reset"  theme="nds" onclick={executeAction} data-action-index="index1"><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-heading_small nds-text-link nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BName%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-large-size_5-of-12 nds-medium-size_5-of-12 nds-small-size_5-of-12 nds-size_5-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ReportedDate","id":"state-new-condition-0","operator":"!=","type":"custom","value":"undefined"}],"id":"state-condition-object","isParent":true}'  merge-field="%3Cdiv%3EReported:%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-large-size_7-of-12 nds-medium-size_7-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="ReportedDate"  format="MMM DD, YYYY"  placeholder=""  styles='\{"value":{"color":""}}'  type="date"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-align-middle nds-large-size_3-of-12 nds-medium-size_3-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium nds-p-vertical_xxx-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalAmount"  locale=""  placeholder=""  styles='\{"value":{"color":"","fontSize":""}}'  type="currency"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-align-middle  nds-communities-status-toast nds-large-size_2-of-12 nds-medium-size_2-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-theme_warning nds-text-align_center nds-button nds-text-color_inverse  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-0","operator":"==","type":"custom","value":"Draft"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-theme_shade nds-text-align_center nds-button nds-text-color_weak  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-0","operator":"==","type":"custom","value":"Closed"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-theme_success nds-text-align_center nds-button  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_4-of-12 nds-size_4-of-12  condition-element" style="             "><vlocity_ins-output-field     record={record}  card={card}  data-conditions='\{"group":[{"field":"ClaimStatus","id":"state-new-condition-203","operator":"!=","type":"custom","value":"Draft"},{"field":"ClaimStatus","id":"state-new-condition-41","logicalOperator":"&&","operator":"!=","type":"custom","value":"Closed"}],"id":"state-condition-object","isParent":true}'  field-name="ClaimStatus"  placeholder=""  styles='\{"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state><vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="1" data-rindex={rindex} class="cf-vlocity-state-1 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-state" style="             ">
+          <div class="nds-col  nds-text-align_center nds-text-heading_x-small nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ENo%20records%20returned%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>

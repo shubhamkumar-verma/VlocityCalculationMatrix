@@ -1,0 +1,128 @@
+<template>
+            <div class="nds-grid nds-wrap nds-is-relative">
+            <div if:false={cardLoaded} class="nds-is-absolute vloc-loader_override" style="height: 100%; width: 100%; min-height:50px; background: white; z-index: 99;">
+  <div>
+   <vlocity_ins-spinner
+      variant="brand"
+      alternative-text="Loading content..."
+      size="small"
+      theme="nds"
+      ></vlocity_ins-spinner>
+  </div>
+</div>
+            <template if:false={hasPermission}>
+              You don't have required permissions to view this card.
+            </template>
+            <template if:true={hasPermission}>
+              <template if:true={hasRecords}>
+                        <template for:each={_records} for:item="record" for:index="rindex">
+                            <vlocity_ins-flex-card-state key={record.uniqueKey} data-recordid={record.Id} record={record} data-statue="true"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card  nds-color__text_gray-11  nds-m-bottom_x-small" style="             ">
+          <div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-heading_large  nds-m-bottom_small  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Type"  placeholder=""  styles='\{"value":{"color":"#3E3E3C","fontSize":"22px","textDecoration":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-communities-article nds-p-around_small nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPolicy%20Owner%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Policyholder"  label=""  labelclass=""  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small  nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ERenewal%20Date%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium  nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="ExpirationDate"  format=""  placeholder=""  use-absolute-date="true"  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="date"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPolicy%20Mailing%20Address%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium  nds-text-align_right nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BCalculatedAddress%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPremium%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-truncate nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalAmountForTerm"  format=""  locale=""  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="currency"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col    nds-p-vertical_small  nds-size_12-of-12  " style="     border-color:#E4E9F0;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="            color:#3E3E3C; "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPayment%20Plan%20Number%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency="USD"  field-name="PlanNumber"  format=""  locale=""  mask="####"  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-size_12-of-12 " style="">
+    <vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"cardName":"insPolicyListFlyout_nds","cardNode":"{record}","displayName":"View more details","flyoutLwc":"insPolicyListFlyout_nds","flyoutType":"childCard","id":"flex-action-1607344318588","openFlyoutIn":"Popover","openUrlIn":"Current Window","type":"Flyout","vlocityIcon":""}'  theme="nds"><div slot="flyout">  <c-cf-ins-policy-list-flyout_nds   card-node="\{record}"  records={_records}  parent-record={record}  record-id={recordId}  parent-attribute='\{}'   ></c-cf-ins-policy-list-flyout_nds></div></vlocity_ins-action>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                        </template>
+                      </template>
+                      <template if:false={hasRecords}>
+                            <vlocity_ins-flex-card-state  record={record} data-statue="false"  data-index="0" data-rindex={rindex} class="cf-vlocity-state-0 cf-vlocity-state nds-size_12-of-12 "  tracking-obj={_childCardTrackingObj} >
+      <div if:true={cardLoaded} class="nds-grid nds-wrap nds-communities-policy-card  nds-color__text_gray-11  nds-m-bottom_x-small" style="             ">
+          <div class="nds-col    nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-heading_large  nds-m-bottom_small  nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Type"  placeholder=""  styles='\{"value":{"color":"#3E3E3C","fontSize":"22px","textDecoration":""}}'  type="text"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col   nds-communities-article nds-p-around_small nds-large-size_12-of-12 nds-medium-size_12-of-12 nds-small-size_12-of-12 nds-size_12-of-12  " style="             ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPolicy%20Owner%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="Policyholder"  label=""  labelclass=""  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small  nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3ERenewal%20Date%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium  nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  field-name="ExpirationDate"  format=""  placeholder=""  use-absolute-date="true"  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="date"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPolicy%20Mailing%20Address%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium  nds-text-align_right nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3E%7BCalculatedAddress%7D%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-border_bottom nds-p-vertical_small nds-border_bottom nds-size_12-of-12  " style="     border-color:#E4E9F0; border-width:1px;       ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPremium%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-truncate nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency=""  field-name="TotalAmountForTerm"  format=""  locale=""  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="currency"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col    nds-p-vertical_small  nds-size_12-of-12  " style="     border-color:#E4E9F0;        ">
+    <vlocity_ins-block  record={record}  card={card}  collapsed-by-default="false"  collapsible="false"  label="Block"  theme="nds" ><div class="nds-grid nds-wrap">
+          <div class="nds-col  nds-text-body_medium_bold  nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="            color:#3E3E3C; "><vlocity_ins-output-field     record={record}  card={card}  merge-field="%3Cdiv%3EPayment%20Plan%20Number%3C/div%3E"  theme="nds"  ></vlocity_ins-output-field>
+      </div><div class="nds-col  nds-text-body_medium nds-text-align_right nds-p-left_x-small nds-large-size_6-of-12 nds-medium-size_6-of-12 nds-small-size_6-of-12 nds-size_6-of-12  " style="             "><vlocity_ins-output-field     record={record}  card={card}  currency="USD"  field-name="PlanNumber"  format=""  locale=""  mask="####"  placeholder=""  styles='\{"label":{"fontSize":"","textAlign":""},"value":{"color":"","fontSize":"","textAlign":""}}'  type="text"  valueclass=""  theme="nds"  ></vlocity_ins-output-field>
+      </div>
+        </div></vlocity_ins-block>
+    </div><div class="nds-col   nds-size_12-of-12 " style="">
+    <vlocity_ins-action  tracking-obj={_childCardTrackingObj}   state-obj={record}  record={record}  card={card}  hide-action-icon="true"  state-action='\{"cardName":"insPolicyListFlyout_nds","cardNode":"{record}","displayName":"View more details","flyoutLwc":"insPolicyListFlyout_nds","flyoutType":"childCard","id":"flex-action-1607344318588","openFlyoutIn":"Popover","openUrlIn":"Current Window","type":"Flyout","vlocityIcon":""}'  theme="nds"><div slot="flyout">  <c-cf-ins-policy-list-flyout_nds   card-node="\{record}"  records={_records}  parent-record={record}  record-id={recordId}  parent-attribute='\{}'   ></c-cf-ins-policy-list-flyout_nds></div></vlocity_ins-action>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div></vlocity_ins-block>
+    </div>
+        </div>
+      </vlocity_ins-flex-card-state>
+                      </template>
+            </template>
+            <template if:true={hasError}>
+            {error}
+            </template>
+            
+      <vlocity_ins-action action-wrapperclass="slds-hide" re-render-flyout class="action-trigger slds-col" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+      
+      </vlocity_ins-action>
+  
+            <vlocity_ins-action class="execute-action" re-render-flyout action-wrapperclass="slds-hide" onupdateos={updateOmniscript} onsetvalue={updateAction}>
+            
+            </vlocity_ins-action>
+            </div>
+          </template>
