@@ -157,7 +157,6 @@ public with sharing class CsvDataController {
             response.fileName = matrixVersion.Name + '_v' + matrixVersion.vlocity_ins__VersionNumber__c + '.csv';
             response.matrixVersionId = matrixVersionId;
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
-            
             return response;
             
         } catch (Exception e) {
