@@ -50,7 +50,6 @@ public with sharing class CsvDataController {
                 WHERE vlocity_ins__CalculationMatrixId__c = :calculationMatrixId
                 ORDER BY vlocity_ins__VersionNumber__c ASC
             ];
-            
             // If no versions exist, start with 1
             if (existingVersions.isEmpty()) {
                 System.debug('==== DEBUG: No existing versions, returning 1');
