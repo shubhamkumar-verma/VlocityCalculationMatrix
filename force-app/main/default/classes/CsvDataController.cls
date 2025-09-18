@@ -303,7 +303,6 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error creating calculation matrix: ' + e.getMessage());
         }
     }
-    
     /**
      * @description Get next version number for a calculation matrix
      * @param calculationMatrixId ID of the calculation matrix
