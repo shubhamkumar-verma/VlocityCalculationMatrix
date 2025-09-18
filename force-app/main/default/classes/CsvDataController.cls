@@ -377,7 +377,6 @@ public with sharing class CsvDataController {
                 headerMetadata.put('displayOrder', displayOrder++);
                 headerMetadata.put('dataType', dataTypes.containsKey(header) ? dataTypes.get(header) : 'Text');
                 headerMetadata.put('columnKey', EncodingUtil.convertToHex(Crypto.generateDigest('MD5', Blob.valueOf(header))).substring(0, 6));
-                
                 vlocity_ins__CalculationMatrixRow__c headerRow = new vlocity_ins__CalculationMatrixRow__c();
                 headerRow.Name = 'Header';
                 headerRow.vlocity_ins__CalculationMatrixVersionId__c = matrixVersionId;
