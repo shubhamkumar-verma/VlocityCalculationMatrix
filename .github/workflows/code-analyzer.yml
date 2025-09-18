@@ -20,15 +20,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 1: Install Salesforce CLI
-      - name: Install Salesforce CLI
-        run: npm install -g @salesforce/cli@latest
-
-      # Step 2: Install Salesforce Code Analyzer Plugin
-      - name: Install Code Analyzer Plugin
-        run: sf plugins install code-analyzer@latest
-
-      # Step 3: Find all changed files and format the list
+      # Step 1: Find all changed files and create a list
       - name: 'Get changed files in PR'
         id: changed-files
         uses: tj-actions/changed-files@v44
@@ -41,18 +33,26 @@ jobs:
             **/*.css
             **/*.html
 
-      # Step 4: Run Salesforce Code Analyzer on changed files
+      # Step 2: Run Salesforce Code Analyzer on changed files
+      # This step uses a custom 'run' command to correctly handle multiple file paths
+      # and passes the files as a formatted array to the sf code-analyzer run command.
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         run: |
-          # Split the space-separated list into a bash array
           changed_files_array=(${{ steps.changed-files.outputs.all_changed_files }})
-          # Pass the array of files correctly to the --target argument
           sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}"
 
-      # Step 5: Check for violations and set job status
+      # Step 3: Check for violations and set job status
+      # This step is modified to run the 'if' check after the scan to ensure the
+      # JSON file exists.
       - name: 'Check for violations and set job status'
-        if: ${{ steps.scan-step.outputs.num-violations > 0 }}
+        if: always()
         run: |
-          echo "Salesforce Code Analyzer found ${{ steps.scan-step.outputs.num-violations }} violations."
-          exit 1
+          if [ -f sfca_results.json ]; then
+            violations=$(jq '.length' sfca_results.json)
+            if [ "$violations" -gt 0 ]; then
+              echo "Salesforce Code Analyzer found $violations violations."
+              exit 1
+            fi
+          fi
+          echo "Salesforce Code Analyzer completed with no violations."
