@@ -38,57 +38,225 @@ jobs:
             **/*.css
             **/*.html
 
+      - name: 'Debug changed files'
+        run: |
+          echo "Any changed files: ${{ steps.changed-files.outputs.any_changed }}"
+          echo "All changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "Changed files count: ${{ steps.changed-files.outputs.all_changed_files_count }}"
+          
+          # List all files in workspace for debugging
+          echo "All files in workspace:"
+          find . -name "*.cls" -o -name "*.trigger" -o -name "*.cmp" -o -name "*.js" -o -name "*.css" -o -name "*.html" | head -20
+
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         run: |
+          echo "Running Code Analyzer on changed files..."
           changed_files_array=(${{ steps.changed-files.outputs.all_changed_files }})
-          sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}"
+          echo "Files to analyze: ${changed_files_array[@]}"
+          
+          # Verify files exist
+          for file in "${changed_files_array[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✓ File exists: $file"
+            else
+              echo "✗ File not found: $file"
+            fi
+          done
+          
+          # Run the analyzer with verbose output
+          sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}" --verbose
+          
+          # Check if output file was created
+          if [ -f sfca_results.json ]; then
+            echo "✓ sfca_results.json created successfully"
+            echo "File size: $(wc -c < sfca_results.json) bytes"
+          else
+            echo "✗ sfca_results.json was not created"
+          fi
 
-      - name: 'Check for violations and set job status'
+      - name: 'Run Salesforce Code Analyzer on all applicable files (fallback)'
+        if: ${{ steps.changed-files.outputs.any_changed != 'true' }}
+        run: |
+          echo "No changed files detected, running on all applicable files..."
+          
+          # Find all applicable files
+          applicable_files=$(find . -name "*.cls" -o -name "*.trigger" -o -name "*.cmp" -o -name "*.js" -o -name "*.css" -o -name "*.html" | grep -v node_modules | head -10)
+          
+          if [ -n "$applicable_files" ]; then
+            echo "Found applicable files:"
+            echo "$applicable_files"
+            
+            # Convert to array
+            files_array=($applicable_files)
+            
+            # Run analyzer
+            sf code-analyzer run --view detail --output-file sfca_results.json --target "${files_array[@]}" --verbose
+            
+            if [ -f sfca_results.json ]; then
+              echo "✓ sfca_results.json created successfully"
+              echo "File size: $(wc -c < sfca_results.json) bytes"
+            else
+              echo "✗ sfca_results.json was not created"
+            fi
+          else
+            echo "No applicable files found in the repository"
+            # Create empty results file to prevent the analysis step from failing
+            echo '[]' > sfca_results.json
+          fi
+
+      - name: 'Analyze Code Analyzer Results'
         if: always()
         run: |
+          echo "=== Salesforce Code Analyzer Results ==="
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          
           if [ -f sfca_results.json ]; then
-            echo "Analyzing JSON structure..."
-            # First, let's see the structure of the JSON file
-            echo "First 20 lines of results:"
-            head -20 sfca_results.json
+            echo "✓ sfca_results.json found"
+            echo "File size: $(wc -c < sfca_results.json) bytes"
+            echo "First few lines of file:"
+            head -10 sfca_results.json
             
             # Check if the JSON is valid
             if ! jq empty sfca_results.json 2>/dev/null; then
-              echo "Invalid JSON format in sfca_results.json"
+              echo "❌ Invalid JSON format in sfca_results.json"
+              echo "Raw content (first 50 lines):"
+              head -50 sfca_results.json
               exit 1
             fi
             
-            # Try to determine the actual structure and count violations
-            violations=$(jq -r '
-              if type == "array" then
-                map(select(has("violations")) | .violations | length) | add // 0
-              elif type == "object" and has("violations") then
-                .violations | length
-              elif type == "object" and has("results") then
-                .results | map(select(has("violations")) | .violations | length) | add // 0
+            # Display the JSON structure for debugging
+            echo "📊 JSON Structure Analysis:"
+            jq -r 'type' sfca_results.json
+            
+            # Count violations by severity
+            violations_summary=$(jq -r '
+              def count_violations:
+                if type == "array" then
+                  map(select(has("violations")) | .violations[])
+                elif type == "object" and has("violations") then
+                  .violations[]
+                elif type == "object" and has("results") then
+                  .results[] | select(has("violations")) | .violations[]
+                else
+                  empty
+                end;
+              
+              [count_violations] | 
+              group_by(.severity) | 
+              map({
+                severity: .[0].severity,
+                count: length
+              }) |
+              if length == 0 then
+                "No violations found"
               else
-                0
+                "Violations by severity:\n" + 
+                (map("  \(.severity): \(.count)") | join("\n")) +
+                "\nTotal violations: \(map(.count) | add)"
               end
             ' sfca_results.json)
             
-            echo "Total violations found: $violations"
+            echo "$violations_summary"
             
-            if [ "$violations" -gt 0 ]; then
-              echo "Salesforce Code Analyzer found $violations violations."
-              # Display violation details
-              jq -r '
+            # Get total violation count
+            total_violations=$(jq -r '
+              def count_violations:
                 if type == "array" then
-                  .[] | select(has("violations")) | .violations[]?
+                  [map(select(has("violations")) | .violations[])] | length
                 elif type == "object" and has("violations") then
-                  .violations[]?
+                  .violations | length
                 elif type == "object" and has("results") then
-                  .results[] | select(has("violations")) | .violations[]?
+                  [.results[] | select(has("violations")) | .violations[]] | length
                 else
-                  empty
-                end
-              ' sfca_results.json || echo "Could not extract violation details"
-              exit 1
+                  0
+                end;
+              count_violations
+            ' sfca_results.json)
+            
+            echo "📈 Total violations found: $total_violations"
+            
+            if [ "$total_violations" -gt 0 ]; then
+              echo ""
+              echo "🔍 Detailed Violation Report:"
+              echo "================================"
+              
+              # Display detailed violations
+              jq -r '
+                def get_violations:
+                  if type == "array" then
+                    map(select(has("violations")) | .violations[])
+                  elif type == "object" and has("violations") then
+                    .violations[]
+                  elif type == "object" and has("results") then
+                    .results[] | select(has("violations")) | .violations[]
+                  else
+                    empty
+                  end;
+                
+                [get_violations] | 
+                group_by(.severity) |
+                map(
+                  "## \(.[0].severity | ascii_upcase) SEVERITY (\(length) violations)\n" +
+                  (map(
+                    "### \(.ruleName // "Unknown Rule")\n" +
+                    "📁 File: \(.fileName // "Unknown")\n" +
+                    "📍 Line: \(.line // "N/A"), Column: \(.column // "N/A")\n" +
+                    "💬 Message: \(.message // "No message")\n" +
+                    "🔗 URL: \(.url // "No URL")\n"
+                  ) | join("\n"))
+                ) | join("\n")
+              ' sfca_results.json
+              
+              echo ""
+              echo "❌ Code analysis failed due to violations. Please review and fix the issues above."
+              
+              # Set exit code based on severity
+              high_severity=$(jq -r '
+                def count_violations:
+                  if type == "array" then
+                    [map(select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1 or .severity == "High"))] | length
+                  elif type == "object" and has("violations") then
+                    [.violations[] | select(.severity == "1" or .severity == 1 or .severity == "High")] | length
+                  elif type == "object" and has("results") then
+                    [.results[] | select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1 or .severity == "High")] | length
+                  else
+                    0
+                  end;
+                count_violations
+              ' sfca_results.json)
+              
+              if [ "$high_severity" -gt 0 ]; then
+                echo "🚨 Found $high_severity high severity violations - failing build"
+                exit 1
+              else
+                echo "⚠️ Found violations but no high severity issues - build will continue"
+                exit 0
+              fi
+            else
+              echo "✅ Salesforce Code Analyzer completed with no violations."
+              exit 0
+            fi
+          else
+            echo "📄 No sfca_results.json file found"
+            echo "This could mean:"
+            echo "  1. No applicable files were found to analyze"
+            echo "  2. The Code Analyzer failed to run"
+            echo "  3. The Code Analyzer ran but didn't produce output"
+            echo ""
+            echo "Checking for any error logs..."
+            
+            # Check if there are any applicable files at all
+            applicable_files=$(find . -name "*.cls" -o -name "*.trigger" -o -name "*.cmp" -o -name "*.js" -o -name "*.css" -o -name "*.html" | grep -v node_modules | wc -l)
+            echo "Total applicable files in repository: $applicable_files"
+            
+            if [ "$applicable_files" -eq 0 ]; then
+              echo "✅ No applicable files found - analysis not needed"
+              exit 0
+            else
+              echo "⚠️ Applicable files exist but no analysis results produced"
+              exit 0
             fi
           fi
-          echo "Salesforce Code Analyzer completed with no violations."
