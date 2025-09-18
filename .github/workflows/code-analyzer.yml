@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+    workflow_dispatch: # <-- Add this here
     types: [opened, edited, synchronized, reopened]
 
 jobs: # <-- This is at the top level
