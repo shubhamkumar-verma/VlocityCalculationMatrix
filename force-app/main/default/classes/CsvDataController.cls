@@ -367,8 +367,7 @@ public with sharing class CsvDataController {
                     headerTypes.put(header, 'Input');
                     dataTypes.put(header, 'Text');
                 }
-            }
-            
+            }        
             // Create a header record for each column
             Integer displayOrder = 1;
             for (String header : headers) {
