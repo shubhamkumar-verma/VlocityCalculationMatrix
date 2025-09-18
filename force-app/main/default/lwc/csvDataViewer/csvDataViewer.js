@@ -378,8 +378,7 @@ export default class CsvDataViewer extends LightningElement {
             if (this.hasUnsavedChanges) {
                 // First save the edits to the preview data
                 await this.savePreviewEdits();
-            }
-            
+            }  
             // If we have edited preview data, use that instead of the original file
             if (this.allPreviewData && this.allPreviewData.length > 0 && this.csvPreviewData && this.csvPreviewData.headers) {
                 console.log('Saving with edited preview data');

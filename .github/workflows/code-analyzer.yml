@@ -48,9 +48,46 @@ jobs:
         if: always()
         run: |
           if [ -f sfca_results.json ]; then
-            violations=$(jq -r 'map(select(.violations | length) | .violations | length) | add' sfca_results.json)
+            echo "Analyzing JSON structure..."
+            # First, let's see the structure of the JSON file
+            echo "First 20 lines of results:"
+            head -20 sfca_results.json
+            
+            # Check if the JSON is valid
+            if ! jq empty sfca_results.json 2>/dev/null; then
+              echo "Invalid JSON format in sfca_results.json"
+              exit 1
+            fi
+            
+            # Try to determine the actual structure and count violations
+            violations=$(jq -r '
+              if type == "array" then
+                map(select(has("violations")) | .violations | length) | add // 0
+              elif type == "object" and has("violations") then
+                .violations | length
+              elif type == "object" and has("results") then
+                .results | map(select(has("violations")) | .violations | length) | add // 0
+              else
+                0
+              end
+            ' sfca_results.json)
+            
+            echo "Total violations found: $violations"
+            
             if [ "$violations" -gt 0 ]; then
               echo "Salesforce Code Analyzer found $violations violations."
+              # Display violation details
+              jq -r '
+                if type == "array" then
+                  .[] | select(has("violations")) | .violations[]?
+                elif type == "object" and has("violations") then
+                  .violations[]?
+                elif type == "object" and has("results") then
+                  .results[] | select(has("violations")) | .violations[]?
+                else
+                  empty
+                end
+              ' sfca_results.json || echo "Could not extract violation details"
               exit 1
             fi
           fi
