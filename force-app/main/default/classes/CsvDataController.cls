@@ -344,8 +344,7 @@ public with sharing class CsvDataController {
         try {
             if (parsedCsv.isEmpty() || parsedCsv[0].isEmpty()) {
                 throw new AuraHandledException('CSV data is empty or invalid');
-            }
-            
+            }  
             // Get headers from first row
             List<String> headers = parsedCsv[0];
             
