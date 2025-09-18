@@ -20,12 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 1: Find all changed files and create a list
+      # Step 1: Install Salesforce CLI
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli@latest
+
+      # Step 2: Install Salesforce Code Analyzer Plugin
+      - name: Install Code Analyzer Plugin
+        run: sf plugins install code-analyzer@latest
+
+      # Step 3: Find all changed files and format the list
       - name: 'Get changed files in PR'
         id: changed-files
         uses: tj-actions/changed-files@v44
         with:
-          # Match Salesforce file types, like Apex classes, Triggers, and LWC files
           files: |
             **/*.cls
             **/*.trigger
@@ -34,15 +41,16 @@ jobs:
             **/*.css
             **/*.html
 
-      # Step 2: Set the list of changed files as the target for the scan
+      # Step 4: Run Salesforce Code Analyzer on changed files
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
-        uses: forcedotcom/run-code-analyzer@v2
-        id: scan-step
-        with:
-          run-arguments: '--view detail --output-file sfca_results.json --target "${{ steps.changed-files.outputs.all_changed_files }}"'
+        run: |
+          # Split the space-separated list into a bash array
+          changed_files_array=(${{ steps.changed-files.outputs.all_changed_files }})
+          # Pass the array of files correctly to the --target argument
+          sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}"
 
-      # Step 3: Check for violations and fail job if necessary
+      # Step 5: Check for violations and set job status
       - name: 'Check for violations and set job status'
         if: ${{ steps.scan-step.outputs.num-violations > 0 }}
         run: |
