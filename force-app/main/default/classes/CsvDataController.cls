@@ -422,7 +422,6 @@ public with sharing class CsvDataController {
                         outputDataMap.put(header, value);
                     }
                 }
-                
                 // Create matrix row record
                 vlocity_ins__CalculationMatrixRow__c dataRow = new vlocity_ins__CalculationMatrixRow__c();
                 dataRow.vlocity_ins__CalculationMatrixVersionId__c = matrixVersionId;
