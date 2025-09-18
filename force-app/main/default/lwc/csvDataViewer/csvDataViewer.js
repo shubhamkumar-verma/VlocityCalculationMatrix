@@ -412,7 +412,6 @@ export default class CsvDataViewer extends LightningElement {
             this.showPreview = false;
             this.isReadyToSave = false;
             this.showColumnConfig = false;
-            
             // Clear editing state
             this.draftValues = [];
             this.hasUnsavedChanges = false;
