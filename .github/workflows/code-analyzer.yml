@@ -48,7 +48,7 @@ jobs:
         if: always()
         run: |
           if [ -f sfca_results.json ]; then
-            violations=$(jq -r 'map(.violations | length) | add' sfca_results.json)
+            violations=$(jq -r 'map(select(.violations | length) | .violations | length) | add' sfca_results.json)
             if [ "$violations" -gt 0 ]; then
               echo "Salesforce Code Analyzer found $violations violations."
               exit 1
