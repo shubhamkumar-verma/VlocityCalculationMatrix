@@ -429,7 +429,6 @@ public with sharing class CsvDataController {
                 // Generate unique hash for row name using input data
                 String inputHash = EncodingUtil.convertToHex(Crypto.generateDigest('MD5', Blob.valueOf(JSON.serialize(inputDataMap))));
                 dataRow.Name = inputHash;
-                
                 // Serialize maps to JSON
                 dataRow.vlocity_ins__InputData__c = JSON.serialize(inputDataMap);
                 dataRow.vlocity_ins__OutputData__c = JSON.serialize(outputDataMap);
