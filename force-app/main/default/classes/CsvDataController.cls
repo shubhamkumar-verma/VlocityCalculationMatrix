@@ -385,8 +385,7 @@ public with sharing class CsvDataController {
                 headerRows.add(headerRow);
             }
             
-            insert headerRows;
-            
+            insert headerRows; 
             // Continue with creating data rows (existing logic)
             List<vlocity_ins__CalculationMatrixRow__c> dataRows = new List<vlocity_ins__CalculationMatrixRow__c>();
             
