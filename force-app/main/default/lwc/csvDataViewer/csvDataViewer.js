@@ -374,7 +374,6 @@ export default class CsvDataViewer extends LightningElement {
             console.log('Matrix name:', this.matrixName);
             console.log('Calculation Matrix ID:', matrixId);
             console.log('Column configurations:', this.columnConfigurations);
-            
             // Check if user has made any edits to the preview data
             if (this.hasUnsavedChanges) {
                 // First save the edits to the preview data
