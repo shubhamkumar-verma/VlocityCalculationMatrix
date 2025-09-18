@@ -20,16 +20,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Salesforce CLI
-        run: npm install -g @salesforce/cli@latest
-
-      - name: Install Code Analyzer Plugin
-        run: sf plugins install code-analyzer@latest
-
+      # Step 1: Find all changed files and create a list
       - name: 'Get changed files in PR'
         id: changed-files
         uses: tj-actions/changed-files@v44
         with:
+          # Match Salesforce file types, like Apex classes, Triggers, and LWC files
           files: |
             **/*.cls
             **/*.trigger
@@ -38,176 +34,95 @@ jobs:
             **/*.css
             **/*.html
 
+      # Step 2: Debug changed files (optional, can remove in production)
       - name: 'Debug changed files'
-        run: |
-          echo "Any changed files: ${{ steps.changed-files.outputs.any_changed }}"
-          echo "All changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
-          echo "Changed files count: ${{ steps.changed-files.outputs.all_changed_files_count }}"
-
-      - name: 'Run Salesforce Code Analyzer on changed files only'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         run: |
-          echo "Running Code Analyzer on changed files only..."
-          
-          # Get changed files as string and convert to array
-          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
-          echo "Changed files string: $changed_files"
-          
-          # Convert space-separated string to array
-          IFS=' ' read -ra changed_files_array <<< "$changed_files"
-          
-          echo "Files to analyze:"
-          for file in "${changed_files_array[@]}"; do
-            echo "  - $file"
-          done
-          
-          # Verify files exist before running analyzer
-          existing_files=()
-          for file in "${changed_files_array[@]}"; do
-            if [ -f "$file" ]; then
-              echo "✓ File exists: $file"
-              existing_files+=("$file")
-            else
-              echo "✗ File not found: $file"
-            fi
-          done
-          
-          if [ ${#existing_files[@]} -eq 0 ]; then
-            echo "No existing files to analyze"
-            echo '[]' > sfca_results.json
-            exit 0
-          fi
-          
-          echo "Running analyzer on ${#existing_files[@]} files..."
-          
-          # Run the analyzer
-          sf code-analyzer run --view detail --output-file sfca_results.json --target "${existing_files[@]}"
-          
-          # Check if output file was created
-          if [ -f sfca_results.json ]; then
-            echo "✓ sfca_results.json created successfully"
-            echo "File size: $(wc -c < sfca_results.json) bytes"
-          else
-            echo "✗ sfca_results.json was not created"
-            # Create empty results to prevent failure
-            echo '[]' > sfca_results.json
-          fi
+          echo "Changed files detected: ${{ steps.changed-files.outputs.any_changed }}"
+          echo "Number of changed files: ${{ steps.changed-files.outputs.all_changed_files_count }}"
+          echo "Changed files:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n'
 
-      - name: 'Handle case when no changed files detected'
-        if: ${{ steps.changed-files.outputs.any_changed != 'true' }}
-        run: |
-          echo "No changed files detected for analysis"
-          echo "This could happen if:"
-          echo "  1. Only non-code files were changed"
-          echo "  2. The commit doesn't contain the file types we're monitoring"
-          echo "  3. This is a push to development without file changes"
-          
-          # Create empty results file
-          echo '[]' > sfca_results.json
-          echo "Created empty results file to skip analysis"
+      # Step 3: Set the list of changed files as the target for the scan
+      - name: 'Run Salesforce Code Analyzer on changed files'
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
+        uses: forcedotcom/run-code-analyzer@v2
+        id: scan-step
+        with:
+          run-arguments: '--view detail --output-file sfca_results.json --target "${{ steps.changed-files.outputs.all_changed_files }}"'
 
-      - name: 'Analyze Code Analyzer Results'
-        if: always()
+      # Step 4: Display detailed results if violations are found
+      - name: 'Display violation details'
+        if: ${{ steps.scan-step.outputs.num-violations > 0 }}
         run: |
           echo "=== Salesforce Code Analyzer Results ==="
+          echo "📊 Total violations found: ${{ steps.scan-step.outputs.num-violations }}"
+          echo "📁 Files analyzed: ${{ steps.changed-files.outputs.all_changed_files_count }}"
+          echo ""
           
           if [ -f sfca_results.json ]; then
-            echo "✓ sfca_results.json found"
-            echo "File size: $(wc -c < sfca_results.json) bytes"
+            echo "🔍 Detailed Violation Report:"
+            echo "================================"
             
-            # Show the actual content for debugging
-            echo "=== FILE CONTENT START ==="
-            cat sfca_results.json
-            echo "=== FILE CONTENT END ==="
-            
-            # Check if the JSON is valid first
-            if ! jq empty sfca_results.json 2>/dev/null; then
-              echo "❌ Invalid JSON format in sfca_results.json"
-              echo "Trying to fix JSON or handle as text..."
-              exit 1
-            fi
-            
-            # Check the JSON type
-            json_type=$(jq -r 'type' sfca_results.json)
-            echo "JSON type: $json_type"
-            
-            # Simple length check for arrays
-            if [ "$json_type" = "array" ]; then
-              length=$(jq 'length' sfca_results.json)
-              echo "Array length: $length"
-              
-              if [ "$length" -eq 0 ]; then
-                echo "✅ No violations found in analyzed files"
-                exit 0
-              fi
-              
-              # Count violations in a simpler way
-              violation_count=0
-              
-              # Check if any elements have violations
-              has_violations=$(jq -r 'map(select(has("violations"))) | length' sfca_results.json 2>/dev/null || echo "0")
-              
-              if [ "$has_violations" -gt 0 ]; then
-                # Count total violations
-                violation_count=$(jq -r '[.[] | select(has("violations")) | .violations[]] | length' sfca_results.json 2>/dev/null || echo "0")
-                
-                echo "📈 Total violations found: $violation_count"
-                
-                if [ "$violation_count" -gt 0 ]; then
-                  echo ""
-                  echo "🔍 Violation Details:"
-                  echo "====================="
-                  
-                  # Simple violation display
-                  jq -r '.[] | select(has("violations")) | .violations[] | "File: \(.fileName // "Unknown")\nLine: \(.line // "N/A")\nRule: \(.ruleName // "Unknown")\nMessage: \(.message // "No message")\nSeverity: \(.severity // "Unknown")\n---"' sfca_results.json 2>/dev/null || echo "Could not parse violations"
-                  
-                  echo ""
-                  echo "❌ Code analysis found violations in the changed files."
-                  exit 1
+            # Display violations grouped by severity
+            jq -r '
+              def get_violations:
+                if type == "array" then
+                  map(select(has("violations")) | .violations[])
+                elif type == "object" and has("violations") then
+                  .violations[]
+                elif type == "object" and has("results") then
+                  .results[] | select(has("violations")) | .violations[]
                 else
-                  echo "✅ No violations found in changed files."
-                  exit 0
-                fi
+                  empty
+                end;
+              
+              [get_violations] |
+              if length > 0 then
+                group_by(.severity) |
+                map(
+                  "\n## \(.[0].severity | ascii_upcase) SEVERITY (\(length) violations)" +
+                  "\n" +
+                  (map(
+                    "### \(.ruleName // "Unknown Rule")" +
+                    "\n📁 **File:** \(.fileName // "Unknown")" +
+                    "\n📍 **Location:** Line \(.line // "N/A"), Column \(.column // "N/A")" +
+                    "\n💬 **Message:** \(.message // "No message")" +
+                    "\n🔗 **More Info:** \(.url // "No URL available")" +
+                    "\n---"
+                  ) | join("\n"))
+                ) | join("\n")
               else
-                echo "✅ No violations found in analyzed files"
-                exit 0
-              fi
-              
-            elif [ "$json_type" = "object" ]; then
-              echo "JSON is an object, checking for results or violations..."
-              
-              # Handle object format
-              has_results=$(jq -r 'has("results")' sfca_results.json 2>/dev/null || echo "false")
-              has_violations=$(jq -r 'has("violations")' sfca_results.json 2>/dev/null || echo "false")
-              
-              if [ "$has_results" = "true" ]; then
-                violation_count=$(jq -r '.results | length' sfca_results.json 2>/dev/null || echo "0")
-              elif [ "$has_violations" = "true" ]; then
-                violation_count=$(jq -r '.violations | length' sfca_results.json 2>/dev/null || echo "0")
-              else
-                violation_count=0
-              fi
-              
-              echo "📈 Total violations found: $violation_count"
-              
-              if [ "$violation_count" -gt 0 ]; then
-                echo "❌ Code analysis found violations in the changed files."
-                echo "Raw violations:"
-                jq -r '.' sfca_results.json
-                exit 1
-              else
-                echo "✅ No violations found in changed files."
-                exit 0
-              fi
-              
-            else
-              echo "⚠️ Unexpected JSON format: $json_type"
-              echo "Content:"
-              jq -r '.' sfca_results.json
-              exit 0
-            fi
-            
+                "No detailed violations available"
+              end
+            ' sfca_results.json 2>/dev/null || echo "Could not parse violation details from results file"
           else
-            echo "❌ No sfca_results.json file found - this shouldn't happen"
-            exit 1
+            echo "⚠️ Results file not found for detailed analysis"
           fi
+
+      # Step 5: Check for violations and fail job if necessary
+      - name: 'Check for violations and set job status'
+        if: ${{ steps.scan-step.outputs.num-violations > 0 }}
+        run: |
+          echo ""
+          echo "❌ Salesforce Code Analyzer found ${{ steps.scan-step.outputs.num-violations }} violations in the changed files."
+          echo "📋 Please review and fix the violations listed above before merging."
+          echo ""
+          echo "Files that were analyzed:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | sed 's/^/  - /'
+          exit 1
+
+      # Step 6: Success message when no violations found
+      - name: 'Success message'
+        if: ${{ steps.changed-files.outputs.any_changed == 'true' && steps.scan-step.outputs.num-violations == 0 }}
+        run: |
+          echo "✅ Salesforce Code Analyzer completed successfully!"
+          echo "📊 Files analyzed: ${{ steps.changed-files.outputs.all_changed_files_count }}"
+          echo "🎉 No violations found in the changed files."
+
+      # Step 7: Handle case when no files changed
+      - name: 'No files to analyze'
+        if: ${{ steps.changed-files.outputs.any_changed != 'true' }}
+        run: |
+          echo "ℹ️ No relevant files were changed in this commit/PR."
+          echo "✅ Code analysis skipped - no Salesforce files to analyze."
