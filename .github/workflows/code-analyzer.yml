@@ -5,17 +5,18 @@ on:
     branches:
       - main
     types: [opened, edited, synchronized, reopened]
+  workflow_dispatch: # <-- CORRECT indentation. Nested under the 'on' key.
 
-jobs: # <-- This is at the top level
-  salesforce-code-analyzer-scan: # <-- This job is nested inside 'jobs'
+jobs:
+  salesforce-code-analyzer-scan:
     runs-on: ubuntu-latest
-
     permissions:
       pull-requests: write
-
-    steps: # <-- This is nested inside the job
+    steps:
       - name: 'Check out source code'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: 'Run Salesforce Code Analyzer'
         uses: forcedotcom/run-code-analyzer@v2
         id: scan-step
