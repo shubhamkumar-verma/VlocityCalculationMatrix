@@ -202,7 +202,6 @@ export default class CsvDataViewer extends LightningElement {
     get showConfigureColumnsButton() {
         return this.showPreview && this.headers && this.headers.length > 0;
     }
-
     /**
      * Component lifecycle
      */

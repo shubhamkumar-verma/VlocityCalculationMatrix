@@ -344,11 +344,9 @@ public with sharing class CsvDataController {
         try {
             if (parsedCsv.isEmpty() || parsedCsv[0].isEmpty()) {
                 throw new AuraHandledException('CSV data is empty or invalid');
-            }
-            
+            }  
             // Get headers from first row
             List<String> headers = parsedCsv[0];
-            
             // Create header records first
             List<vlocity_ins__CalculationMatrixRow__c> headerRows = new List<vlocity_ins__CalculationMatrixRow__c>();
             
