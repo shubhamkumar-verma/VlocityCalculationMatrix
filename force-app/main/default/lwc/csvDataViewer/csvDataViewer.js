@@ -370,7 +370,6 @@ export default class CsvDataViewer extends LightningElement {
             }
             // Use calculationMatrixId if provided, otherwise use recordId
             const matrixId = this.calculationMatrixId || this.recordId;
-            
             console.log('Saving matrix version:', this.uploadedFileName);
             console.log('Matrix name:', this.matrixName);
             console.log('Calculation Matrix ID:', matrixId);

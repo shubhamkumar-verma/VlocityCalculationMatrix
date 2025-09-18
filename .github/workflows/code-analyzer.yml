@@ -20,7 +20,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 1: Find all changed files and create a list
+      # Explicitly install Salesforce CLI for robustness
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli@latest
+
+      # Explicitly install Code Analyzer Plugin
+      - name: Install Code Analyzer Plugin
+        run: sf plugins install code-analyzer@latest
+
+      # Get the list of changed files
       - name: 'Get changed files in PR'
         id: changed-files
         uses: tj-actions/changed-files@v44
@@ -33,18 +41,14 @@ jobs:
             **/*.css
             **/*.html
 
-      # Step 2: Run Salesforce Code Analyzer on changed files
-      # This step uses a custom 'run' command to correctly handle multiple file paths
-      # and passes the files as a formatted array to the sf code-analyzer run command.
+      # Run Code Analyzer on the list of changed files
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         run: |
           changed_files_array=(${{ steps.changed-files.outputs.all_changed_files }})
           sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}"
 
-      # Step 3: Check for violations and set job status
-      # This step is modified to run the 'if' check after the scan to ensure the
-      # JSON file exists.
+      # Check for violations and fail job if necessary
       - name: 'Check for violations and set job status'
         if: always()
         run: |
