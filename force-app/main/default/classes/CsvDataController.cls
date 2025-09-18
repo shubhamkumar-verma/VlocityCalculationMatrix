@@ -425,7 +425,6 @@ public with sharing class CsvDataController {
                 // Create matrix row record
                 vlocity_ins__CalculationMatrixRow__c dataRow = new vlocity_ins__CalculationMatrixRow__c();
                 dataRow.vlocity_ins__CalculationMatrixVersionId__c = matrixVersionId;
-                
                 // Generate unique hash for row name using input data
                 String inputHash = EncodingUtil.convertToHex(Crypto.generateDigest('MD5', Blob.valueOf(JSON.serialize(inputDataMap))));
                 dataRow.Name = inputHash;
