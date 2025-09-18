@@ -441,7 +441,6 @@ public with sharing class CsvDataController {
                 
                 dataRows.add(dataRow);
             }
-            
             if (!dataRows.isEmpty()) {
                 insert dataRows;
             }
