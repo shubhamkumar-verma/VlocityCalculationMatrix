@@ -347,7 +347,6 @@ public with sharing class CsvDataController {
             }  
             // Get headers from first row
             List<String> headers = parsedCsv[0];
-            
             // Create header records first
             List<vlocity_ins__CalculationMatrixRow__c> headerRows = new List<vlocity_ins__CalculationMatrixRow__c>();
             
