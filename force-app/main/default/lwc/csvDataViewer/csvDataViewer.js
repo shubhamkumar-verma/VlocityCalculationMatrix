@@ -417,7 +417,6 @@ export default class CsvDataViewer extends LightningElement {
             this.draftValues = [];
             this.hasUnsavedChanges = false;
             this.editedRowsCount = 0;
-            
             // Clear temporary data
             this.csvPreviewData = null;
             this.uploadedFileContent = '';
