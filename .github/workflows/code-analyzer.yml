@@ -3,12 +3,15 @@ name: Salesforce Code Analyzer
 on:
   pull_request:
     branches:
-      - main
+      - development # Run on PRs targeting the 'development' branch
     types: [opened, edited, synchronized, reopened]
-  workflow_dispatch: # <-- CORRECT indentation. Nested under the 'on' key.
+  push:
+    branches:
+      - development # Run on a merge or push to the 'development' branch
 
 jobs:
   salesforce-code-analyzer-scan:
+    # ... rest of your job remains the same ...
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
