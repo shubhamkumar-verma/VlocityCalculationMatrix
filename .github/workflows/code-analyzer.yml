@@ -1,37 +1,27 @@
 name: Salesforce Code Analyzer
 
-# 1. Trigger the workflow on pull requests
 on:
   pull_request:
     branches:
-      - main # Run when a PR targets the 'main' branch
-    types: [opened, edited, synchronized, reopened] # Trigger on these PR events
-    workflow_dispatch: # <-- Add this line 
+      - main
+    types: [opened, edited, synchronized, reopened]
 
-# 2. Define a job for the code analysis
-jobs:
-  salesforce-code-analyzer-scan:
-    runs-on: ubuntu-latest # Use a standard Ubuntu runner provided by GitHub
+jobs: # <-- This is at the top level
+  salesforce-code-analyzer-scan: # <-- This job is nested inside 'jobs'
+    runs-on: ubuntu-latest
 
-    # Set permissions for the GitHub token to interact with the PR
     permissions:
-      pull-requests: write # This allows the action to write a review comment on the PR
+      pull-requests: write
 
-    # 3. Define the steps within the job
-    steps:
+    steps: # <-- This is nested inside the job
       - name: 'Check out source code'
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches full Git history, which is important for PR analysis
-
       - name: 'Run Salesforce Code Analyzer'
-        uses: forcedotcom/run-code-analyzer@v2 # The official action from the GitHub Marketplace
-        id: scan-step # Assign an ID to reference the action's outputs
+        uses: forcedotcom/run-code-analyzer@v2
+        id: scan-step
         with:
-          run-arguments: '--view detail --output-file sfca_results.json' # Command-line arguments for the analyzer
-
+          run-arguments: '--view detail --output-file sfca_results.json'
       - name: 'Check for violations and fail job if necessary'
-        # This condition checks the number of violations found in the previous step
         if: ${{ steps.scan-step.outputs.num-violations > 0 }}
         run: |
           echo "Salesforce Code Analyzer found ${{ steps.scan-step.outputs.num-violations }} violations."
