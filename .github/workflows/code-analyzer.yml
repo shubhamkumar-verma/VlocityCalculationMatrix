@@ -80,7 +80,7 @@ jobs:
           
           echo "Running analyzer on ${#existing_files[@]} files..."
           
-          # Run the analyzer (removed --verbose flag)
+          # Run the analyzer
           sf code-analyzer run --view detail --output-file sfca_results.json --target "${existing_files[@]}"
           
           # Check if output file was created
@@ -115,113 +115,98 @@ jobs:
             echo "✓ sfca_results.json found"
             echo "File size: $(wc -c < sfca_results.json) bytes"
             
-            # Show first few lines for debugging
-            echo "First few lines of results:"
-            head -5 sfca_results.json
+            # Show the actual content for debugging
+            echo "=== FILE CONTENT START ==="
+            cat sfca_results.json
+            echo "=== FILE CONTENT END ==="
             
-            # Check if the JSON is valid
+            # Check if the JSON is valid first
             if ! jq empty sfca_results.json 2>/dev/null; then
               echo "❌ Invalid JSON format in sfca_results.json"
-              echo "Raw content:"
-              cat sfca_results.json
+              echo "Trying to fix JSON or handle as text..."
               exit 1
             fi
             
-            # Check if it's an empty array
-            if [ "$(jq 'length' sfca_results.json)" -eq 0 ]; then
-              echo "✅ No violations found in analyzed files"
-              exit 0
-            fi
+            # Check the JSON type
+            json_type=$(jq -r 'type' sfca_results.json)
+            echo "JSON type: $json_type"
             
-            # Count violations by severity
-            violations_summary=$(jq -r '
-              def count_violations:
-                if type == "array" then
-                  map(select(has("violations")) | .violations[])
-                elif type == "object" and has("violations") then
-                  .violations[]
-                elif type == "object" and has("results") then
-                  .results[] | select(has("violations")) | .violations[]
-                else
-                  empty
-                end;
+            # Simple length check for arrays
+            if [ "$json_type" = "array" ]; then
+              length=$(jq 'length' sfca_results.json)
+              echo "Array length: $length"
               
-              [count_violations] | 
-              if length == 0 then
-                "No violations found"
-              else
-                group_by(.severity) | 
-                map({
-                  severity: .[0].severity,
-                  count: length
-                }) |
-                "Violations by severity:\n" + 
-                (map("  \(.severity): \(.count)") | join("\n")) +
-                "\nTotal violations: \(map(.count) | add)"
-              end
-            ' sfca_results.json)
-            
-            echo "$violations_summary"
-            
-            # Get total violation count
-            total_violations=$(jq -r '
-              def count_violations:
-                if type == "array" then
-                  [map(select(has("violations")) | .violations[])] | length
-                elif type == "object" and has("violations") then
-                  .violations | length
-                elif type == "object" and has("results") then
-                  [.results[] | select(has("violations")) | .violations[]] | length
-                else
-                  0
-                end;
-              count_violations
-            ' sfca_results.json)
-            
-            echo "📈 Total violations found: $total_violations"
-            
-            if [ "$total_violations" -gt 0 ]; then
-              echo ""
-              echo "🔍 Detailed Violation Report:"
-              echo "================================"
+              if [ "$length" -eq 0 ]; then
+                echo "✅ No violations found in analyzed files"
+                exit 0
+              fi
               
-              # Display detailed violations
-              jq -r '
-                def get_violations:
-                  if type == "array" then
-                    map(select(has("violations")) | .violations[])
-                  elif type == "object" and has("violations") then
-                    .violations[]
-                  elif type == "object" and has("results") then
-                    .results[] | select(has("violations")) | .violations[]
-                  else
-                    empty
-                  end;
+              # Count violations in a simpler way
+              violation_count=0
+              
+              # Check if any elements have violations
+              has_violations=$(jq -r 'map(select(has("violations"))) | length' sfca_results.json 2>/dev/null || echo "0")
+              
+              if [ "$has_violations" -gt 0 ]; then
+                # Count total violations
+                violation_count=$(jq -r '[.[] | select(has("violations")) | .violations[]] | length' sfca_results.json 2>/dev/null || echo "0")
                 
-                [get_violations] | 
-                group_by(.severity) |
-                map(
-                  "## \(.[0].severity | ascii_upcase) SEVERITY (\(length) violations)\n" +
-                  (map(
-                    "### \(.ruleName // "Unknown Rule")\n" +
-                    "📁 File: \(.fileName // "Unknown")\n" +
-                    "📍 Line: \(.line // "N/A"), Column: \(.column // "N/A")\n" +
-                    "💬 Message: \(.message // "No message")\n" +
-                    "🔗 URL: \(.url // "No URL")\n"
-                  ) | join("\n"))
-                ) | join("\n")
-              ' sfca_results.json
+                echo "📈 Total violations found: $violation_count"
+                
+                if [ "$violation_count" -gt 0 ]; then
+                  echo ""
+                  echo "🔍 Violation Details:"
+                  echo "====================="
+                  
+                  # Simple violation display
+                  jq -r '.[] | select(has("violations")) | .violations[] | "File: \(.fileName // "Unknown")\nLine: \(.line // "N/A")\nRule: \(.ruleName // "Unknown")\nMessage: \(.message // "No message")\nSeverity: \(.severity // "Unknown")\n---"' sfca_results.json 2>/dev/null || echo "Could not parse violations"
+                  
+                  echo ""
+                  echo "❌ Code analysis found violations in the changed files."
+                  exit 1
+                else
+                  echo "✅ No violations found in changed files."
+                  exit 0
+                fi
+              else
+                echo "✅ No violations found in analyzed files"
+                exit 0
+              fi
               
-              echo ""
-              echo "❌ Code analysis found violations in the changed files."
-              echo "Please review and fix the issues above before merging."
+            elif [ "$json_type" = "object" ]; then
+              echo "JSON is an object, checking for results or violations..."
               
-              # Fail the build for any violations in changed files
-              exit 1
+              # Handle object format
+              has_results=$(jq -r 'has("results")' sfca_results.json 2>/dev/null || echo "false")
+              has_violations=$(jq -r 'has("violations")' sfca_results.json 2>/dev/null || echo "false")
+              
+              if [ "$has_results" = "true" ]; then
+                violation_count=$(jq -r '.results | length' sfca_results.json 2>/dev/null || echo "0")
+              elif [ "$has_violations" = "true" ]; then
+                violation_count=$(jq -r '.violations | length' sfca_results.json 2>/dev/null || echo "0")
+              else
+                violation_count=0
+              fi
+              
+              echo "📈 Total violations found: $violation_count"
+              
+              if [ "$violation_count" -gt 0 ]; then
+                echo "❌ Code analysis found violations in the changed files."
+                echo "Raw violations:"
+                jq -r '.' sfca_results.json
+                exit 1
+              else
+                echo "✅ No violations found in changed files."
+                exit 0
+              fi
+              
             else
-              echo "✅ Salesforce Code Analyzer completed with no violations in changed files."
+              echo "⚠️ Unexpected JSON format: $json_type"
+              echo "Content:"
+              jq -r '.' sfca_results.json
               exit 0
             fi
+            
           else
             echo "❌ No sfca_results.json file found - this shouldn't happen"
             exit 1
