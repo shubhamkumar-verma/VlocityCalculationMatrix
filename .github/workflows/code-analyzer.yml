@@ -44,51 +44,133 @@ jobs:
           changed_files_array=(${{ steps.changed-files.outputs.all_changed_files }})
           sf code-analyzer run --view detail --output-file sfca_results.json --target "${changed_files_array[@]}"
 
-      - name: 'Check for violations and set job status'
+      - name: 'Analyze Code Analyzer Results'
         if: always()
         run: |
           if [ -f sfca_results.json ]; then
-            echo "Analyzing JSON structure..."
-            # First, let's see the structure of the JSON file
-            echo "First 20 lines of results:"
-            head -20 sfca_results.json
+            echo "=== Salesforce Code Analyzer Results ==="
             
             # Check if the JSON is valid
             if ! jq empty sfca_results.json 2>/dev/null; then
-              echo "Invalid JSON format in sfca_results.json"
+              echo "❌ Invalid JSON format in sfca_results.json"
+              echo "Raw content (first 50 lines):"
+              head -50 sfca_results.json
               exit 1
             fi
             
-            # Try to determine the actual structure and count violations
-            violations=$(jq -r '
-              if type == "array" then
-                map(select(has("violations")) | .violations | length) | add // 0
-              elif type == "object" and has("violations") then
-                .violations | length
-              elif type == "object" and has("results") then
-                .results | map(select(has("violations")) | .violations | length) | add // 0
+            # Display the JSON structure for debugging
+            echo "📊 JSON Structure Analysis:"
+            jq -r 'type' sfca_results.json
+            
+            # Count violations by severity
+            violations_summary=$(jq -r '
+              def count_violations:
+                if type == "array" then
+                  map(select(has("violations")) | .violations[])
+                elif type == "object" and has("violations") then
+                  .violations[]
+                elif type == "object" and has("results") then
+                  .results[] | select(has("violations")) | .violations[]
+                else
+                  empty
+                end;
+              
+              [count_violations] | 
+              group_by(.severity) | 
+              map({
+                severity: .[0].severity,
+                count: length
+              }) |
+              if length == 0 then
+                "No violations found"
               else
-                0
+                "Violations by severity:\n" + 
+                (map("  \(.severity): \(.count)") | join("\n")) +
+                "\nTotal violations: \(map(.count) | add)"
               end
             ' sfca_results.json)
             
-            echo "Total violations found: $violations"
+            echo "$violations_summary"
             
-            if [ "$violations" -gt 0 ]; then
-              echo "Salesforce Code Analyzer found $violations violations."
-              # Display violation details
-              jq -r '
+            # Get total violation count
+            total_violations=$(jq -r '
+              def count_violations:
                 if type == "array" then
-                  .[] | select(has("violations")) | .violations[]?
+                  [map(select(has("violations")) | .violations[])] | length
                 elif type == "object" and has("violations") then
-                  .violations[]?
+                  .violations | length
                 elif type == "object" and has("results") then
-                  .results[] | select(has("violations")) | .violations[]?
+                  [.results[] | select(has("violations")) | .violations[]] | length
                 else
-                  empty
-                end
-              ' sfca_results.json || echo "Could not extract violation details"
-              exit 1
+                  0
+                end;
+              count_violations
+            ' sfca_results.json)
+            
+            echo "📈 Total violations found: $total_violations"
+            
+            if [ "$total_violations" -gt 0 ]; then
+              echo ""
+              echo "🔍 Detailed Violation Report:"
+              echo "================================"
+              
+              # Display detailed violations
+              jq -r '
+                def get_violations:
+                  if type == "array" then
+                    map(select(has("violations")) | .violations[])
+                  elif type == "object" and has("violations") then
+                    .violations[]
+                  elif type == "object" and has("results") then
+                    .results[] | select(has("violations")) | .violations[]
+                  else
+                    empty
+                  end;
+                
+                [get_violations] | 
+                group_by(.severity) |
+                map(
+                  "## \(.[0].severity | ascii_upcase) SEVERITY (\(length) violations)\n" +
+                  (map(
+                    "### \(.ruleName // "Unknown Rule")\n" +
+                    "📁 File: \(.fileName // "Unknown")\n" +
+                    "📍 Line: \(.line // "N/A"), Column: \(.column // "N/A")\n" +
+                    "💬 Message: \(.message // "No message")\n" +
+                    "🔗 URL: \(.url // "No URL")\n"
+                  ) | join("\n"))
+                ) | join("\n")
+              ' sfca_results.json
+              
+              echo ""
+              echo "❌ Code analysis failed due to violations. Please review and fix the issues above."
+              
+              # Set exit code based on severity
+              high_severity=$(jq -r '
+                def count_violations:
+                  if type == "array" then
+                    [map(select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1 or .severity == "High"))] | length
+                  elif type == "object" and has("violations") then
+                    [.violations[] | select(.severity == "1" or .severity == 1 or .severity == "High")] | length
+                  elif type == "object" and has("results") then
+                    [.results[] | select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1 or .severity == "High")] | length
+                  else
+                    0
+                  end;
+                count_violations
+              ' sfca_results.json)
+              
+              if [ "$high_severity" -gt 0 ]; then
+                echo "🚨 Found $high_severity high severity violations - failing build"
+                exit 1
+              else
+                echo "⚠️ Found violations but no high severity issues - build will continue"
+                exit 0
+              fi
+            else
+              echo "✅ Salesforce Code Analyzer completed with no violations."
+              exit 0
             fi
+          else
+            echo "📄 No sfca_results.json file found - analysis may not have run"
+            exit 0
           fi
-          echo "Salesforce Code Analyzer completed with no violations."
