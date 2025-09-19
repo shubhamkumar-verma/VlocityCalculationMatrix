@@ -50,6 +50,9 @@ public with sharing class CsvDataController {
                 WHERE vlocity_ins__CalculationMatrixId__c = :calculationMatrixId
                 ORDER BY vlocity_ins__VersionNumber__c ASC
             ];
+            
+            System.debug('==== DEBUG: All existing versions: ' + existingVersions);
+            
             // If no versions exist, start with 1
             if (existingVersions.isEmpty()) {
                 System.debug('==== DEBUG: No existing versions, returning 1');
@@ -62,6 +65,7 @@ public with sharing class CsvDataController {
                     existingVersionNumbers.add((Integer) version.vlocity_ins__VersionNumber__c);
                 }
             }
+            
             System.debug('==== DEBUG: Existing version numbers: ' + existingVersionNumbers);
             
             // Find the first available version number starting from 1
@@ -77,6 +81,7 @@ public with sharing class CsvDataController {
             return 1;
         }
     }
+    
     /**
      * @description Get paginated CSV data from Calculation Matrix Version
      * @param matrixVersionId ID of the CalculationMatrixVersion
@@ -121,7 +126,6 @@ public with sharing class CsvDataController {
             // Extract headers and data
             List<String> headers = parsedCsv[0];
             List<List<String>> allDataRows = new List<List<String>>();
-
             // Skip header row
             for (Integer i = 1; i < parsedCsv.size(); i++) {
                 allDataRows.add(parsedCsv[i]);
@@ -156,6 +160,7 @@ public with sharing class CsvDataController {
             response.fileName = matrixVersion.Name + '_v' + matrixVersion.vlocity_ins__VersionNumber__c + '.csv';
             response.matrixVersionId = matrixVersionId;
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
+            
             return response;
             
         } catch (Exception e) {
@@ -195,6 +200,7 @@ public with sharing class CsvDataController {
             if (String.isBlank(matrixId)) {
                 matrixId = getOrCreateCalculationMatrix(matrixName);
             }
+            
             // Get the Calculation Matrix record to fetch its name
             vlocity_ins__CalculationMatrix__c calculationMatrix = [
                 SELECT Id, Name
@@ -202,8 +208,10 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixId 
                 LIMIT 1
             ];
+            
             // Always get the next available version number
             Integer nextVersion = getNextAvailableVersionNumber(matrixId);
+            
             // Create version name using Calculation Matrix name + version number
             String versionName = calculationMatrix.Name + ' V' + nextVersion;
             
@@ -230,6 +238,7 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error saving matrix version: ' + e.getMessage());
         }
     }
+    
     /**
      * @description Delete Calculation Matrix Version
      * @param matrixVersionId ID of the CalculationMatrixVersion to delete
@@ -302,6 +311,7 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error creating calculation matrix: ' + e.getMessage());
         }
     }
+    
     /**
      * @description Get next version number for a calculation matrix
      * @param calculationMatrixId ID of the calculation matrix
@@ -343,9 +353,11 @@ public with sharing class CsvDataController {
         try {
             if (parsedCsv.isEmpty() || parsedCsv[0].isEmpty()) {
                 throw new AuraHandledException('CSV data is empty or invalid');
-            }  
+            }
+            
             // Get headers from first row
             List<String> headers = parsedCsv[0];
+            
             // Create header records first
             List<vlocity_ins__CalculationMatrixRow__c> headerRows = new List<vlocity_ins__CalculationMatrixRow__c>();
             
@@ -366,7 +378,8 @@ public with sharing class CsvDataController {
                     headerTypes.put(header, 'Input');
                     dataTypes.put(header, 'Text');
                 }
-            }        
+            }
+            
             // Create a header record for each column
             Integer displayOrder = 1;
             for (String header : headers) {
@@ -376,6 +389,7 @@ public with sharing class CsvDataController {
                 headerMetadata.put('displayOrder', displayOrder++);
                 headerMetadata.put('dataType', dataTypes.containsKey(header) ? dataTypes.get(header) : 'Text');
                 headerMetadata.put('columnKey', EncodingUtil.convertToHex(Crypto.generateDigest('MD5', Blob.valueOf(header))).substring(0, 6));
+                
                 vlocity_ins__CalculationMatrixRow__c headerRow = new vlocity_ins__CalculationMatrixRow__c();
                 headerRow.Name = 'Header';
                 headerRow.vlocity_ins__CalculationMatrixVersionId__c = matrixVersionId;
@@ -384,7 +398,8 @@ public with sharing class CsvDataController {
                 headerRows.add(headerRow);
             }
             
-            insert headerRows; 
+            insert headerRows;
+            
             // Continue with creating data rows (existing logic)
             List<vlocity_ins__CalculationMatrixRow__c> dataRows = new List<vlocity_ins__CalculationMatrixRow__c>();
             
@@ -421,12 +436,15 @@ public with sharing class CsvDataController {
                         outputDataMap.put(header, value);
                     }
                 }
+                
                 // Create matrix row record
                 vlocity_ins__CalculationMatrixRow__c dataRow = new vlocity_ins__CalculationMatrixRow__c();
                 dataRow.vlocity_ins__CalculationMatrixVersionId__c = matrixVersionId;
+                
                 // Generate unique hash for row name using input data
                 String inputHash = EncodingUtil.convertToHex(Crypto.generateDigest('MD5', Blob.valueOf(JSON.serialize(inputDataMap))));
                 dataRow.Name = inputHash;
+                
                 // Serialize maps to JSON
                 dataRow.vlocity_ins__InputData__c = JSON.serialize(inputDataMap);
                 dataRow.vlocity_ins__OutputData__c = JSON.serialize(outputDataMap);
@@ -437,6 +455,7 @@ public with sharing class CsvDataController {
                 
                 dataRows.add(dataRow);
             }
+            
             if (!dataRows.isEmpty()) {
                 insert dataRows;
             }
@@ -444,6 +463,7 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error storing CSV data: ' + e.getMessage());
         }
     }
+    
     /**
      * @description Reconstruct CSV data from CalculationMatrixRow records
      * @param rows List of CalculationMatrixRow records
@@ -523,8 +543,10 @@ public with sharing class CsvDataController {
                 currentField += currentChar;
             }
         }
+        
         // Add the last field
         fields.add(currentField.trim());
+        
         return fields;
     }
     
