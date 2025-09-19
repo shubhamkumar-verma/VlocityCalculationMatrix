@@ -524,7 +524,6 @@ public with sharing class CsvDataController {
                 currentField += currentChar;
             }
         }
-        
         // Add the last field
         fields.add(currentField.trim());
         
