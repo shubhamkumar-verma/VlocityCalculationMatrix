@@ -115,7 +115,6 @@ public with sharing class CsvDataController {
                 WHERE vlocity_ins__CalculationMatrixVersionId__c = :matrixVersionId
                 ORDER BY Name ASC
             ];
-            
             // Parse stored CSV data from first row's InputData or reconstruct from rows
             List<List<String>> parsedCsv = reconstructCsvFromRows(allRows);
             
