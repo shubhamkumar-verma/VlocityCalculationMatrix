@@ -117,7 +117,6 @@ public with sharing class CsvDataController {
             ];
             // Parse stored CSV data from first row's InputData or reconstruct from rows
             List<List<String>> parsedCsv = reconstructCsvFromRows(allRows);
-            
             if (parsedCsv.isEmpty()) {
                 throw new AuraHandledException('No data found in calculation matrix version.');
             }
