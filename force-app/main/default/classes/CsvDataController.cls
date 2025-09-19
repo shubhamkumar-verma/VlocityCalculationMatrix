@@ -77,7 +77,6 @@ public with sharing class CsvDataController {
             return 1;
         }
     }
-    
     /**
      * @description Get paginated CSV data from Calculation Matrix Version
      * @param matrixVersionId ID of the CalculationMatrixVersion
