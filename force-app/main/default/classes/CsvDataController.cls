@@ -139,7 +139,6 @@ public with sharing class CsvDataController {
                     pageData.add(allDataRows[i]);
                 }
             }
-            
             // Convert to map format for Lightning Data Table
             List<Map<String, Object>> records = convertToRecords(headers, pageData, startIndex);
             
