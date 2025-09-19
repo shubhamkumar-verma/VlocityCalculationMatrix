@@ -108,7 +108,6 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixVersionId 
                 LIMIT 1
             ];
-            
             // Get CSV data from CalculationMatrixRow records
             List<vlocity_ins__CalculationMatrixRow__c> allRows = [
                 SELECT Id, Name, vlocity_ins__InputData__c, vlocity_ins__OutputData__c
