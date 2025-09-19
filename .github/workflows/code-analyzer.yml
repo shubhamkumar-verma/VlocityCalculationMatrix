@@ -66,25 +66,6 @@ jobs:
           if [ -f sfca_results.json ]; then
             echo "scan-completed=true" >> $GITHUB_OUTPUT
             
-            echo "=== COMPLETE JSON FILE DEBUG ==="
-            echo "File exists: Yes"
-            echo "File size: $(wc -c < sfca_results.json) bytes"
-            echo "First 20 lines of JSON:"
-            head -20 sfca_results.json
-            echo ""
-            echo "Last 10 lines of JSON:"
-            tail -10 sfca_results.json
-            echo ""
-            echo "JSON validation:"
-            if jq empty sfca_results.json 2>/dev/null; then
-              echo "✅ Valid JSON"
-            else
-              echo "❌ Invalid JSON"
-              echo "JSON parsing error:"
-              jq empty sfca_results.json 2>&1 || true
-            fi
-            echo "=== END COMPLETE DEBUG ==="
-            
             # Count violations from the array
             total_violations=$(jq '. | length' sfca_results.json 2>/dev/null || echo "0")
             echo "Total violations: $total_violations"
@@ -92,7 +73,6 @@ jobs:
           else
             echo "scan-completed=false" >> $GITHUB_OUTPUT
             echo "num-violations=0" >> $GITHUB_OUTPUT
-            echo "❌ Results file not found!"
           fi
 
       # Step 4: Custom violation summary and display
@@ -104,78 +84,14 @@ jobs:
           
           total_violations=${{ steps.scan-step.outputs.num-violations }}
           
-          # More comprehensive debugging
-          echo "=== COMPREHENSIVE JSON ANALYSIS ==="
+          # Count violations by severity
+          critical_count=$(jq '[.[] | select(.severity == 1)] | length' sfca_results.json 2>/dev/null || echo "0")
+          high_count=$(jq '[.[] | select(.severity == 2)] | length' sfca_results.json 2>/dev/null || echo "0")
+          medium_count=$(jq '[.[] | select(.severity == 3)] | length' sfca_results.json 2>/dev/null || echo "0")
+          low_count=$(jq '[.[] | select(.severity == 4)] | length' sfca_results.json 2>/dev/null || echo "0")
+          info_count=$(jq '[.[] | select(.severity == 5)] | length' sfca_results.json 2>/dev/null || echo "0")
           
-          # Check if jq is working at all
-          echo "Testing jq basic functionality:"
-          echo '{"test": "value"}' | jq '.test' || echo "jq command failed"
-          
-          # Check JSON file accessibility
-          echo "Checking JSON file:"
-          if [ -f sfca_results.json ]; then
-            echo "✅ File exists"
-            echo "File permissions: $(ls -la sfca_results.json)"
-            
-            # Try different jq approaches
-            echo "Testing different jq queries:"
-            
-            echo "1. Basic type check:"
-            jq 'type' sfca_results.json 2>&1 || echo "Failed"
-            
-            echo "2. Basic length check:"
-            jq 'length' sfca_results.json 2>&1 || echo "Failed"
-            
-            echo "3. Keys if object:"
-            jq 'keys?' sfca_results.json 2>&1 || echo "Failed or not object"
-            
-            echo "4. First element:"
-            jq '.[0]?' sfca_results.json 2>&1 || echo "Failed"
-            
-            echo "5. First element type:"
-            jq '.[0] | type?' sfca_results.json 2>&1 || echo "Failed"
-            
-            echo "6. All severity values:"
-            jq '.[].severity?' sfca_results.json 2>&1 || echo "Failed"
-            
-            echo "7. Manual severity check:"
-            jq '.[] | .severity' sfca_results.json 2>&1 || echo "Failed"
-            
-          else
-            echo "❌ File does not exist"
-          fi
-          echo "=== END COMPREHENSIVE ANALYSIS ==="
-          
-          # Initialize counts
-          critical_count=0
-          high_count=0
-          medium_count=0
-          low_count=0
-          info_count=0
-          
-          # Try manual parsing if jq is working
-          if [ -f sfca_results.json ] && jq empty sfca_results.json 2>/dev/null; then
-            echo "Attempting manual severity counting..."
-            
-            # Try to extract and count severities manually
-            severity_list=$(jq -r '.[].severity' sfca_results.json 2>/dev/null || echo "")
-            if [ -n "$severity_list" ]; then
-              echo "Found severity values: $severity_list"
-              
-              # Count each severity manually
-              for severity in $severity_list; do
-                case $severity in
-                  1) critical_count=$((critical_count + 1)) ;;
-                  2) high_count=$((high_count + 1)) ;;
-                  3) medium_count=$((medium_count + 1)) ;;
-                  4) low_count=$((low_count + 1)) ;;
-                  5) info_count=$((info_count + 1)) ;;
-                esac
-              done
-            fi
-          fi
-          
-          echo "Manual violation counts:"
+          echo "Violation counts:"
           echo "Critical: $critical_count, High: $high_count, Medium: $medium_count, Low: $low_count, Info: $info_count"
           
           # Summary table
@@ -194,50 +110,89 @@ jobs:
           if [ $total_violations -gt 0 ]; then
             echo "## 🚨 Issues Found" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The following code quality issues were detected:" >> $GITHUB_STEP_SUMMARY
+            echo "The following code quality issues were detected. Issues are grouped by rule for easier review:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Show complete JSON for debugging
-            echo "### 🔍 Complete JSON Output" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to display JSON file" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Try simple violation extraction
-            echo "### 📋 Violation Details (Simple Parse)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Process violations one by one
-            violation_count=0
-            while [ $violation_count -lt $total_violations ]; do
-              echo "Processing violation $((violation_count + 1))..."
-              
-              violation_rule=$(jq -r ".[$violation_count].rule // \"Unknown\"" sfca_results.json 2>/dev/null || echo "Unknown")
-              violation_message=$(jq -r ".[$violation_count].message // \"No message\"" sfca_results.json 2>/dev/null || echo "No message")
-              violation_file=$(jq -r ".[$violation_count].locations[0].file // \"Unknown\"" sfca_results.json 2>/dev/null || echo "Unknown")
-              violation_line=$(jq -r ".[$violation_count].locations[0].startLine // \"?\"" sfca_results.json 2>/dev/null || echo "?")
-              violation_severity=$(jq -r ".[$violation_count].severity // \"?\"" sfca_results.json 2>/dev/null || echo "?")
-              
-              # Add to summary
-              echo "**Violation $((violation_count + 1)): $violation_rule**" >> $GITHUB_STEP_SUMMARY
-              echo "- **File**: $violation_file" >> $GITHUB_STEP_SUMMARY
-              echo "- **Line**: $violation_line" >> $GITHUB_STEP_SUMMARY
-              echo "- **Severity**: $violation_severity" >> $GITHUB_STEP_SUMMARY
-              echo "- **Message**: $violation_message" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              
-              violation_count=$((violation_count + 1))
-            done
+            # Group violations by rule and display them nicely
+            jq -r '
+              # Group violations by rule
+              group_by(.rule) | 
+              map(
+                # Get rule info from first violation in group
+                . as $violations | 
+                .[0] as $first |
+                
+                # Create severity emoji
+                (if $first.severity == 1 then "🔴 Critical"
+                 elif $first.severity == 2 then "🟠 High"
+                 elif $first.severity == 3 then "🟡 Medium"
+                 elif $first.severity == 4 then "🔵 Low"
+                 elif $first.severity == 5 then "⚪ Info"
+                 else "❓ Unknown"
+                 end) as $severity_badge |
+                
+                # Create user-friendly rule description
+                (if $first.rule == "NoTrailingWhitespace" then "Remove Trailing Whitespace"
+                 elif $first.rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Check"
+                 elif $first.rule == "AvoidHardcodingId" then "Avoid Hardcoded Salesforce IDs"
+                 elif $first.rule == "MethodNamingConventions" then "Method Naming Convention"
+                 elif $first.rule == "ClassNamingConventions" then "Class Naming Convention"
+                 elif $first.rule == "VariableNamingConventions" then "Variable Naming Convention"
+                 elif $first.rule == "AvoidGlobalModifier" then "Avoid Global Modifier"
+                 elif $first.rule == "AvoidDmlStatementsInLoops" then "DML Statements in Loops"
+                 elif $first.rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
+                 elif $first.rule == "CyclomaticComplexity" then "Code Complexity Too High"
+                 elif $first.rule == "StdCyclomaticComplexity" then "Method Complexity Too High"
+                 elif $first.rule == "TooManyFields" then "Too Many Class Fields"
+                 elif $first.rule == "EmptyIfStmt" then "Empty If Statement"
+                 elif $first.rule == "EmptyTryOrFinallyBlock" then "Empty Try/Finally Block"
+                 elif $first.rule == "UnusedLocalVariable" then "Unused Local Variable"
+                 elif $first.rule == "UnnecessaryModifier" then "Unnecessary Access Modifier"
+                 else $first.rule
+                 end) as $friendly_rule |
+                
+                # Create solution hint
+                (if $first.rule == "NoTrailingWhitespace" then "💡 **How to fix**: Remove extra spaces at the end of lines"
+                 elif $first.rule == "ApexCRUDViolation" then "💡 **How to fix**: Add `WITH USER_MODE` to SOQL queries or check permissions with `Schema.sObjectType.Object__c.isAccessible()`"
+                 elif $first.rule == "AvoidHardcodingId" then "💡 **How to fix**: Use Custom Settings, Custom Metadata, or dynamic queries instead of hardcoded IDs"
+                 elif $first.rule == "AvoidDmlStatementsInLoops" then "💡 **How to fix**: Move DML operations outside loops by collecting records in a list first"
+                 elif $first.rule == "AvoidSoqlInLoops" then "💡 **How to fix**: Move SOQL queries outside loops or use Maps for data lookup"
+                 elif $first.rule == "CyclomaticComplexity" or $first.rule == "StdCyclomaticComplexity" then "💡 **How to fix**: Break down complex methods into smaller, focused methods"
+                 elif $first.rule == "UnusedLocalVariable" then "💡 **How to fix**: Remove unused variables or use them in your code"
+                 elif $first.rule == "EmptyIfStmt" then "💡 **How to fix**: Add code to the if block or remove the empty statement"
+                 else "💡 **How to fix**: Review the Salesforce coding best practices for this rule"
+                 end) as $solution |
+                
+                # Build the output
+                "### " + $severity_badge + " " + $friendly_rule + " (" + (length | tostring) + " occurrence" + (if length > 1 then "s" else "" end) + ")" +
+                "\n" +
+                "**Issue**: " + $first.message +
+                "\n\n" +
+                $solution +
+                "\n\n" +
+                "**Affected locations**:" +
+                "\n" +
+                (map(
+                  "- **" + .locations[0].file + "** at line **" + (.locations[0].startLine | tostring) + "**" +
+                  (if .locations[0].startColumn then " (column " + (.locations[0].startColumn | tostring) + ")" else "" end)
+                ) | join("\n")) +
+                "\n"
+              ) | join("\n")
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to parse violations" >> $GITHUB_STEP_SUMMARY
             
           else
             echo "## ✅ Excellent Work!" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🎉 No code quality issues found in your changes." >> $GITHUB_STEP_SUMMARY
+            echo "🎉 No code quality issues found in your changes. Your code meets all quality standards!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### What was checked:" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Code style and formatting" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Security best practices" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Performance patterns" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Salesforce platform guidelines" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # Console output
+          # Console output with friendly formatting
           echo ""
           echo "════════════════════════════════════════════════════════════════"
           echo "🔍 CODE QUALITY ANALYSIS COMPLETE"
@@ -255,9 +210,26 @@ jobs:
           
           if [ $total_violations -gt 0 ]; then
             echo "📋 ISSUES DETECTED:"
-            echo "  Check the Summary tab for detailed violation information."
+            
+            # Show a summary of issues by rule
+            jq -r '
+              group_by(.rule) | 
+              map(
+                "  • " + 
+                (if .[0].severity == 1 then "🔴"
+                 elif .[0].severity == 2 then "🟠"
+                 elif .[0].severity == 3 then "🟡"
+                 elif .[0].severity == 4 then "🔵"
+                 else "⚪"
+                 end) + 
+                " " + .[0].rule + " (" + (length | tostring) + " occurrence" + (if length > 1 then "s" else "" end) + ")"
+              ) | join("\n")
+            ' sfca_results.json 2>/dev/null || echo "  Failed to parse issue summary"
+            
+            echo ""
+            echo "💡 Check the 'Summary' tab above for detailed fix instructions."
           else
-            echo "✅ EXCELLENT: No violations found!"
+            echo "✅ EXCELLENT: No violations found! Your code is clean. 🎉"
           fi
           echo ""
           echo "════════════════════════════════════════════════════════════════"
@@ -268,8 +240,20 @@ jobs:
         run: |
           total_violations=${{ steps.scan-step.outputs.num-violations }}
           
-          if [ $total_violations -gt 0 ]; then
-            echo "ℹ️ Build PASSED: $total_violations code style issues found."
+          # Get critical and high severity counts
+          critical_count=$(jq '[.[] | select(.severity == 1)] | length' sfca_results.json 2>/dev/null || echo "0")
+          high_count=$(jq '[.[] | select(.severity == 2)] | length' sfca_results.json 2>/dev/null || echo "0")
+          
+          if [ $critical_count -gt 0 ]; then
+            echo "🚨 Build FAILED: $critical_count critical security/performance issues found."
+            echo "❌ Critical issues must be fixed before merging."
+            exit 1
+          elif [ $high_count -gt 0 ]; then
+            echo "⚠️ Build WARNING: $high_count high-priority issues found."
+            echo "🔧 Please review and consider fixing these issues."
+            exit 0
+          elif [ $total_violations -gt 0 ]; then
+            echo "ℹ️ Build PASSED: $total_violations minor code style issues found."
             echo "💡 Consider fixing these for better code quality."
             exit 0
           else

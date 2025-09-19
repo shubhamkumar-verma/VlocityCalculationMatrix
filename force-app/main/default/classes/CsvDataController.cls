@@ -141,7 +141,6 @@ public with sharing class CsvDataController {
             }
             // Convert to map format for Lightning Data Table
             List<Map<String, Object>> records = convertToRecords(headers, pageData, startIndex);
-            
             // Create response
             CsvDataResponse response = new CsvDataResponse();
             response.records = records;
