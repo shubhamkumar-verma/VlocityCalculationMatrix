@@ -132,7 +132,6 @@ public with sharing class CsvDataController {
             Integer totalPages = totalRecords > 0 ? (Integer) Math.ceil((Decimal) totalRecords / pageSize) : 0;
             Integer startIndex = (pageNumber - 1) * pageSize;
             Integer endIndex = Math.min(startIndex + pageSize, totalRecords);
-            
             // Get current page data
             List<List<String>> pageData = new List<List<String>>();
             for (Integer i = startIndex; i < endIndex; i++) {
