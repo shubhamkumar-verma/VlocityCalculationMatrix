@@ -69,17 +69,30 @@ jobs:
             echo "=== COMPLETE JSON DEBUG ==="
             echo "JSON file size: $(wc -c < sfca_results.json) bytes"
             echo "JSON type: $(jq -r 'type' sfca_results.json)"
+            echo "JSON keys: $(jq -r 'keys' sfca_results.json)"
             echo ""
-            echo "=== FIRST 50 LINES OF JSON ==="
-            head -50 sfca_results.json
-            echo ""
-            echo "=== LAST 10 LINES OF JSON ==="
-            tail -10 sfca_results.json
+            echo "=== FULL JSON CONTENT ==="
+            cat sfca_results.json
             echo ""
             echo "=== END JSON DEBUG ==="
             
-            # Simple violation count
-            total_violations=$(jq '. | length' sfca_results.json 2>/dev/null || echo "0")
+            # Count violations based on object structure
+            # The JSON is likely structured as: {"violations": [...], "summary": {...}, etc.}
+            total_violations=0
+            
+            # Try different ways to count violations
+            if jq -e '.violations' sfca_results.json > /dev/null 2>&1; then
+              total_violations=$(jq '.violations | length' sfca_results.json 2>/dev/null || echo "0")
+              echo "Found violations array with $total_violations items"
+            elif jq -e '.results' sfca_results.json > /dev/null 2>&1; then
+              total_violations=$(jq '.results | length' sfca_results.json 2>/dev/null || echo "0")
+              echo "Found results array with $total_violations items"
+            else
+              # Count all arrays in the object
+              total_violations=$(jq '[.[] | select(type == "array")] | map(length) | add // 0' sfca_results.json 2>/dev/null || echo "0")
+              echo "Counted arrays in object: $total_violations"
+            fi
+            
             echo "Total violations: $total_violations"
             echo "num-violations=$total_violations" >> $GITHUB_OUTPUT
           else
@@ -104,25 +117,44 @@ jobs:
           info_count=0
           
           if [ -f sfca_results.json ]; then
-            # Try to parse JSON structure first
+            # Analyze the object structure
             echo "=== JSON STRUCTURE ANALYSIS ==="
             echo "JSON is valid: $(jq empty sfca_results.json && echo 'Yes' || echo 'No')"
             echo "JSON type: $(jq -r 'type' sfca_results.json 2>/dev/null || echo 'unknown')"
-            echo "JSON length: $(jq 'length' sfca_results.json 2>/dev/null || echo 'unknown')"
+            echo "JSON keys: $(jq -r 'keys' sfca_results.json 2>/dev/null || echo 'unknown')"
             
-            # Show structure of first element
-            echo "First element structure:"
-            jq -r '.[0] | keys' sfca_results.json 2>/dev/null || echo "Failed to get keys"
+            # Find where violations are stored
+            violations_path=""
+            if jq -e '.violations' sfca_results.json > /dev/null 2>&1; then
+              violations_path=".violations"
+              echo "Violations found at: .violations"
+            elif jq -e '.results' sfca_results.json > /dev/null 2>&1; then
+              violations_path=".results"
+              echo "Violations found at: .results"
+            else
+              # Find the first array in the object
+              violations_path=$(jq -r 'to_entries | map(select(.value | type == "array")) | .[0].key // "none"' sfca_results.json 2>/dev/null)
+              if [ "$violations_path" != "none" ] && [ -n "$violations_path" ]; then
+                violations_path=".$violations_path"
+                echo "Violations found at: $violations_path"
+              else
+                echo "No violations array found"
+              fi
+            fi
             
-            echo "First element content:"
-            jq -r '.[0]' sfca_results.json 2>/dev/null || echo "Failed to get first element"
-            
-            # Count by severity
-            critical_count=$(jq '[.[] | select(.severity == 1 or .severity == "1")] | length' sfca_results.json 2>/dev/null || echo "0")
-            high_count=$(jq '[.[] | select(.severity == 2 or .severity == "2")] | length' sfca_results.json 2>/dev/null || echo "0")
-            medium_count=$(jq '[.[] | select(.severity == 3 or .severity == "3")] | length' sfca_results.json 2>/dev/null || echo "0")
-            low_count=$(jq '[.[] | select(.severity == 4 or .severity == "4")] | length' sfca_results.json 2>/dev/null || echo "0")
-            info_count=$(jq '[.[] | select(.severity == 5 or .severity == "5")] | length' sfca_results.json 2>/dev/null || echo "0")
+            # Count by severity if we found violations
+            if [ -n "$violations_path" ] && [ "$violations_path" != ".none" ]; then
+              echo "Counting violations using path: $violations_path"
+              
+              critical_count=$(jq "[$violations_path[] | select(.severity == 1 or .severity == \"1\")] | length" sfca_results.json 2>/dev/null || echo "0")
+              high_count=$(jq "[$violations_path[] | select(.severity == 2 or .severity == \"2\")] | length" sfca_results.json 2>/dev/null || echo "0")
+              medium_count=$(jq "[$violations_path[] | select(.severity == 3 or .severity == \"3\")] | length" sfca_results.json 2>/dev/null || echo "0")
+              low_count=$(jq "[$violations_path[] | select(.severity == 4 or .severity == \"4\")] | length" sfca_results.json 2>/dev/null || echo "0")
+              info_count=$(jq "[$violations_path[] | select(.severity == 5 or .severity == \"5\")] | length" sfca_results.json 2>/dev/null || echo "0")
+              
+              echo "Sample violation structure:"
+              jq "$violations_path[0] // \"No violations\"" sfca_results.json 2>/dev/null || echo "Failed to get sample"
+            fi
           fi
           
           echo "Violation counts:"
@@ -146,74 +178,59 @@ jobs:
           echo "| **Total** | **$total_violations** | $([ $total_violations -eq 0 ] && echo "✅ **PASS**" || echo "❌ **REVIEW REQUIRED**") |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ $total_violations -gt 0 ]; then
+          if [ $total_violations -gt 0 ] && [ -n "$violations_path" ] && [ "$violations_path" != ".none" ]; then
             echo "## 🚨 Issues Found" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "The following issues were detected in your code changes:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Create a simple violation list
             echo "### 📋 Violation Details" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Process each violation separately to avoid quote issues
-            violation_index=0
-            while [ $violation_index -lt $total_violations ]; do
-              # Get individual violation data
-              violation_data=$(jq -r ".[$violation_index]" sfca_results.json 2>/dev/null)
-              
-              if [ "$violation_data" != "null" ] && [ -n "$violation_data" ]; then
-                # Extract fields safely
-                file_name=$(echo "$violation_data" | jq -r '.fileName // .filename // .file // "Unknown File"' 2>/dev/null || echo "Unknown File")
-                line_num=$(echo "$violation_data" | jq -r '.line // "?"' 2>/dev/null || echo "?")
-                rule_name=$(echo "$violation_data" | jq -r '.ruleName // .rule // .name // "Unknown Rule"' 2>/dev/null || echo "Unknown Rule")
-                message=$(echo "$violation_data" | jq -r '.message // "No description"' 2>/dev/null || echo "No description")
-                severity=$(echo "$violation_data" | jq -r '.severity // "?"' 2>/dev/null || echo "?")
-                location=$(echo "$violation_data" | jq -r '.location // ""' 2>/dev/null || echo "")
-                
-                # Convert severity to emoji
-                severity_emoji="❓"
-                case $severity in
-                  1|"1") severity_emoji="🔴" ;;
-                  2|"2") severity_emoji="🟠" ;;
-                  3|"3") severity_emoji="🟡" ;;
-                  4|"4") severity_emoji="🔵" ;;
-                  5|"5") severity_emoji="⚪" ;;
-                esac
-                
-                # Extract file and line from location if not available directly
-                if [ "$file_name" = "Unknown File" ] && [ -n "$location" ]; then
-                  file_name=$(echo "$location" | sed 's/ (.*//')
-                fi
-                
-                if [ "$line_num" = "?" ] && [ -n "$location" ]; then
-                  line_num=$(echo "$location" | sed -n 's/.*(\([0-9]*\):.*/\1/p')
-                fi
-                
-                # Add to summary
-                echo "- **$file_name** (Line $line_num)" >> $GITHUB_STEP_SUMMARY
-                echo "  - **Rule**: \`$rule_name\`" >> $GITHUB_STEP_SUMMARY
-                echo "  - **Severity**: $severity_emoji Severity $severity" >> $GITHUB_STEP_SUMMARY
-                echo "  - **Message**: $message" >> $GITHUB_STEP_SUMMARY
-                if [ -n "$location" ]; then
-                  echo "  - **Location**: $location" >> $GITHUB_STEP_SUMMARY
-                fi
-                echo "" >> $GITHUB_STEP_SUMMARY
-              fi
-              
-              violation_index=$((violation_index + 1))
-            done
+            # Extract violation details using the correct path
+            jq -r "
+              $violations_path[] | 
+              \"- **\" + (.fileName // .filename // .file // (.location // \"\" | split(\" (\")[0]) // \"Unknown File\") + \"** (Line \" + 
+              (
+                if .line then (.line | tostring)
+                elif .location then (.location | capture(\"\\\\((?<line>[0-9]+):\") | .line)
+                else \"?\"
+                end
+              ) + \")\" +
+              \"\\n  - **Rule**: \\\`\" + (.ruleName // .rule // .name // \"Unknown\") + \"\\\`\" +
+              \"\\n  - **Severity**: \" + (
+                if .severity == 1 or .severity == \"1\" then \"🔴 Critical\"
+                elif .severity == 2 or .severity == \"2\" then \"🟠 High\"  
+                elif .severity == 3 or .severity == \"3\" then \"🟡 Medium\"
+                elif .severity == 4 or .severity == \"4\" then \"🔵 Low\"
+                elif .severity == 5 or .severity == \"5\" then \"⚪ Info\"
+                else \"❓ Unknown (\" + (.severity | tostring) + \")\"
+                end
+              ) +
+              \"\\n  - **Engine**: \" + (.engine // \"Unknown\") +
+              \"\\n  - **Message**: \" + (.message // \"No description\") +
+              (if .location then \"\\n  - **Location**: \" + .location else \"\" end) +
+              \"\\n\"
+            " sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to parse violations for summary" >> $GITHUB_STEP_SUMMARY
             
             # Show raw JSON for debugging
-            echo "### 🔍 Raw JSON Data (First 3 violations)" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔍 Raw JSON Data" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo '```json' >> $GITHUB_STEP_SUMMARY
-            jq '.[0:3]' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to display raw JSON" >> $GITHUB_STEP_SUMMARY
+            jq '.' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to display raw JSON" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-          else
+          elif [ $total_violations -eq 0 ]; then
             echo "## ✅ Great Job!" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "No code quality issues found in your changes. Your code meets all quality standards! 🎉" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Unable to Parse Violations" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Violations were detected but couldn't be parsed. Please check the raw JSON below:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            jq '.' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to display JSON" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
           fi
           
           # Console output
