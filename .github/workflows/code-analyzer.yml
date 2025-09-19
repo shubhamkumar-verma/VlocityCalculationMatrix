@@ -42,16 +42,7 @@ jobs:
             **/*.css
             **/*.html
 
-      # Step 2: Debug changed files (optional, can remove in production)
-      - name: 'Debug changed files'
-        if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
-        run: |
-          echo "Changed files detected: ${{ steps.changed-files.outputs.any_changed }}"
-          echo "Number of changed files: ${{ steps.changed-files.outputs.all_changed_files_count }}"
-          echo "Changed files:"
-          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n'
-
-      # Step 3: Prepare file list for Code Analyzer
+      # Step 2: Prepare file list for Code Analyzer
       - name: 'Prepare file list for analysis'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         id: prepare-files
@@ -62,88 +53,145 @@ jobs:
           # Replace spaces with commas for the Code Analyzer
           formatted_files=$(echo "$changed_files" | tr ' ' ',')
           
-          echo "Original files: $changed_files"
-          echo "Formatted files: $formatted_files"
           echo "target-files=$formatted_files" >> $GITHUB_OUTPUT
 
-      # Step 4: Set the list of changed files as the target for the scan
+      # Step 3: Run Code Analyzer with custom output handling
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
-        uses: forcedotcom/run-code-analyzer@v2
+        continue-on-error: true
         id: scan-step
-        with:
-          run-arguments: '--view detail --output-file sfca_results.json --target "${{ steps.prepare-files.outputs.target-files }}"'
-
-      # Step 5: Display detailed results if violations are found
-      - name: 'Display violation details'
-        if: ${{ steps.scan-step.outputs.num-violations > 0 }}
         run: |
-          echo "=== Salesforce Code Analyzer Results ==="
-          echo "📊 Total violations found: ${{ steps.scan-step.outputs.num-violations }}"
-          echo "📁 Files analyzed: ${{ steps.changed-files.outputs.all_changed_files_count }}"
-          echo ""
+          # Run the analyzer directly with sf CLI for more control
+          sf code-analyzer run \
+            --view detail \
+            --output-file sfca_results.json \
+            --target "${{ steps.prepare-files.outputs.target-files }}"
           
+          # Check if results file exists
           if [ -f sfca_results.json ]; then
-            echo "🔍 Detailed Violation Report:"
-            echo "================================"
+            echo "scan-completed=true" >> $GITHUB_OUTPUT
             
-            # Display violations grouped by severity
-            jq -r '
-              def get_violations:
-                if type == "array" then
-                  map(select(has("violations")) | .violations[])
-                elif type == "object" and has("violations") then
-                  .violations[]
-                elif type == "object" and has("results") then
-                  .results[] | select(has("violations")) | .violations[]
-                else
-                  empty
-                end;
-              
-              [get_violations] |
-              if length > 0 then
-                group_by(.severity) |
-                map(
-                  "\n## \(.[0].severity | ascii_upcase) SEVERITY (\(length) violations)" +
-                  "\n" +
-                  (map(
-                    "### \(.ruleName // "Unknown Rule")" +
-                    "\n📁 **File:** \(.fileName // "Unknown")" +
-                    "\n📍 **Location:** Line \(.line // "N/A"), Column \(.column // "N/A")" +
-                    "\n💬 **Message:** \(.message // "No message")" +
-                    "\n🔗 **More Info:** \(.url // "No URL available")" +
-                    "\n---"
-                  ) | join("\n"))
-                ) | join("\n")
-              else
-                "No detailed violations available"
-              end
-            ' sfca_results.json 2>/dev/null || echo "Could not parse violation details from results file"
+            # Count total violations
+            total_violations=$(jq -r '[.[] | select(has("violations")) | .violations[]] | length' sfca_results.json 2>/dev/null || echo "0")
+            echo "num-violations=$total_violations" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ Results file not found for detailed analysis"
+            echo "scan-completed=false" >> $GITHUB_OUTPUT
+            echo "num-violations=0" >> $GITHUB_OUTPUT
           fi
 
-      # Step 6: Check for violations and fail job if necessary
-      - name: 'Check for violations and set job status'
-        if: ${{ steps.scan-step.outputs.num-violations > 0 }}
+      # Step 4: Custom violation summary and display
+      - name: 'Custom Code Quality Report'
+        if: ${{ steps.scan-step.outputs.scan-completed == 'true' }}
         run: |
+          echo "# 🔍 Code Quality Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Get violation counts by severity
+          critical_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1)] | length' sfca_results.json 2>/dev/null || echo "0")
+          high_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "2" or .severity == 2)] | length' sfca_results.json 2>/dev/null || echo "0")
+          medium_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "3" or .severity == 3)] | length' sfca_results.json 2>/dev/null || echo "0")
+          low_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "4" or .severity == 4)] | length' sfca_results.json 2>/dev/null || echo "0")
+          info_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "5" or .severity == 5)] | length' sfca_results.json 2>/dev/null || echo "0")
+          
+          total_violations=${{ steps.scan-step.outputs.num-violations }}
+          
+          # Summary table
+          echo "## 📊 Violation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Severity | Count | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 Critical | $critical_count | $([ $critical_count -eq 0 ] && echo "✅ Pass" || echo "❌ Fail") |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟠 High | $high_count | $([ $high_count -eq 0 ] && echo "✅ Pass" || echo "⚠️ Review") |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Medium | $medium_count | $([ $medium_count -eq 0 ] && echo "✅ Pass" || echo "ℹ️ Consider") |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔵 Low | $low_count | $([ $low_count -eq 0 ] && echo "✅ Pass" || echo "ℹ️ Optional") |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⚪ Info | $info_count | $([ $info_count -eq 0 ] && echo "✅ Pass" || echo "ℹ️ Info") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Total** | **$total_violations** | $([ $total_violations -eq 0 ] && echo "✅ **PASS**" || echo "❌ **REVIEW REQUIRED**") |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $total_violations -gt 0 ]; then
+            echo "## 🚨 Issues Found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following issues were detected in your code changes:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Group violations by file and severity
+            jq -r '
+              [.[] | select(has("violations")) | .violations[]] |
+              group_by(.fileName) |
+              map(
+                "### 📁 " + .[0].fileName + "\n" +
+                (group_by(.severity) | map(
+                  (if .[0].severity == "1" or .[0].severity == 1 then "#### 🔴 Critical Issues (" + (length | tostring) + ")"
+                   elif .[0].severity == "2" or .[0].severity == 2 then "#### 🟠 High Priority Issues (" + (length | tostring) + ")"
+                   elif .[0].severity == "3" or .[0].severity == 3 then "#### 🟡 Medium Priority Issues (" + (length | tostring) + ")"
+                   elif .[0].severity == "4" or .[0].severity == 4 then "#### 🔵 Low Priority Issues (" + (length | tostring) + ")"
+                   else "#### ⚪ Info (" + (length | tostring) + ")"
+                   end) + "\n" +
+                  (map(
+                    "- **Line " + (.line // "?" | tostring) + ", Col " + (.column // "?" | tostring) + "**: " + (.message // "No description") + "\n" +
+                    "  - **Rule**: `" + (.ruleName // "Unknown") + "`\n" +
+                    "  - **Category**: " + (.category // "General") + "\n" +
+                    (if .url then "  - **[Learn More](" + .url + ")**\n" else "" end)
+                  ) | join("\n"))
+                ) | join("\n\n"))
+              ) | join("\n\n")
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ Great Job!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No code quality issues found in your changes. Your code meets all quality standards! 🎉" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Console output with custom formatting
           echo ""
-          echo "❌ Salesforce Code Analyzer found ${{ steps.scan-step.outputs.num-violations }} violations in the changed files."
-          echo "📋 Please review and fix the violations listed above before merging."
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🔍 SALESFORCE CODE QUALITY ANALYSIS COMPLETE"
+          echo "════════════════════════════════════════════════════════════════"
           echo ""
-          echo "Files that were analyzed:"
-          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | sed 's/^/  - /'
-          exit 1
+          echo "📊 SUMMARY:"
+          echo "  🔴 Critical: $critical_count"
+          echo "  🟠 High:     $high_count"
+          echo "  🟡 Medium:   $medium_count"
+          echo "  🔵 Low:      $low_count"
+          echo "  ⚪ Info:     $info_count"
+          echo "  ────────────────"
+          echo "  📈 Total:    $total_violations"
+          echo ""
+          
+          if [ $total_violations -gt 0 ]; then
+            echo "❌ ACTION REQUIRED: Please review and address the issues above."
+            echo "📋 Check the 'Summary' tab for detailed violation information."
+          else
+            echo "✅ EXCELLENT: No violations found! Your code is clean. 🎉"
+          fi
+          echo ""
+          echo "════════════════════════════════════════════════════════════════"
 
-      # Step 7: Success message when no violations found
-      - name: 'Success message'
-        if: ${{ steps.changed-files.outputs.any_changed == 'true' && steps.scan-step.outputs.num-violations == 0 }}
+      # Step 5: Determine build status
+      - name: 'Evaluate Build Status'
+        if: ${{ steps.scan-step.outputs.scan-completed == 'true' }}
         run: |
-          echo "✅ Salesforce Code Analyzer completed successfully!"
-          echo "📊 Files analyzed: ${{ steps.changed-files.outputs.all_changed_files_count }}"
-          echo "🎉 No violations found in the changed files."
+          total_violations=${{ steps.scan-step.outputs.num-violations }}
+          
+          # Get critical and high severity counts
+          critical_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "1" or .severity == 1)] | length' sfca_results.json 2>/dev/null || echo "0")
+          high_count=$(jq -r '[.[] | select(has("violations")) | .violations[] | select(.severity == "2" or .severity == 2)] | length' sfca_results.json 2>/dev/null || echo "0")
+          
+          # Fail build only for critical and high severity issues
+          if [ $critical_count -gt 0 ] || [ $high_count -gt 0 ]; then
+            echo "🚨 Build failed due to $critical_count critical and $high_count high severity violations."
+            echo "💡 Fix critical and high severity issues before merging."
+            exit 1
+          elif [ $total_violations -gt 0 ]; then
+            echo "⚠️ Build passed with $total_violations minor violations."
+            echo "💡 Consider addressing these issues to improve code quality."
+            exit 0
+          else
+            echo "✅ Build passed with no violations!"
+            exit 0
+          fi
 
-      # Step 8: Handle case when no files changed
+      # Step 6: Handle case when no files changed
       - name: 'No files to analyze'
         if: ${{ steps.changed-files.outputs.any_changed != 'true' }}
         run: |

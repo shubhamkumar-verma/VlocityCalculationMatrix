@@ -423,7 +423,6 @@ export default class CsvDataViewer extends LightningElement {
             this.allPreviewData = [];
             
             console.log('Created Matrix Version ID:', this.matrixVersionId);
-            
             // Load first page of data
             await this.loadMatrixData();
             
