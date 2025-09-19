@@ -526,7 +526,6 @@ public with sharing class CsvDataController {
         }
         // Add the last field
         fields.add(currentField.trim());
-        
         return fields;
     }
     
