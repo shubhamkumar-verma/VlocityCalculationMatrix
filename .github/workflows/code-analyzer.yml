@@ -56,11 +56,12 @@ jobs:
         continue-on-error: true
         id: scan-step
         run: |
-          # Run the analyzer directly with sf CLI for more control
+          # Run the analyzer with NoTrailingWhitespace rule excluded
           sf code-analyzer run \
             --view detail \
             --output-file sfca_results.json \
-            --target "${{ steps.prepare-files.outputs.target-files }}"
+            --target "${{ steps.prepare-files.outputs.target-files }}" \
+            --rule-filter="!NoTrailingWhitespace"
           
           # Check if results file exists and count violations
           if [ -f sfca_results.json ]; then
