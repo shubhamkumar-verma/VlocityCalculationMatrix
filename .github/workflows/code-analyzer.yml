@@ -66,11 +66,12 @@ jobs:
           if [ -f sfca_results_raw.json ]; then
             echo "scan-completed=true" >> $GITHUB_OUTPUT
             
+            # Count NoTrailingWhitespace violations before filtering
+            trailing_whitespace_count=$(jq '(.results // [] | map(.violations // [] | map(select(.rule == "NoTrailingWhitespace")) | length) | add // 0)' sfca_results_raw.json 2>/dev/null || echo "0")
+            echo "Found $trailing_whitespace_count NoTrailingWhitespace violations to filter out"
+            
             # Filter out NoTrailingWhitespace violations from the JSON
-            jq '
-              # Calculate how many NoTrailingWhitespace violations to subtract
-              (.results // [] | map(.violations // [] | map(select(.rule == "NoTrailingWhitespace")) | length) | add // 0) as $trailing_whitespace_count |
-              
+            jq --argjson whitespace_count "$trailing_whitespace_count" '
               # Filter violations from results array
               .results = (.results // [] | map(
                 if has("violations") then
@@ -79,8 +80,8 @@ jobs:
               )) |
               
               # Update violation counts - subtract the NoTrailingWhitespace count from total and sev5
-              .violationCounts.total = (.violationCounts.total - $trailing_whitespace_count) |
-              .violationCounts.sev5 = (.violationCounts.sev5 - $trailing_whitespace_count)
+              .violationCounts.total = (.violationCounts.total - $whitespace_count) |
+              .violationCounts.sev5 = (.violationCounts.sev5 - $whitespace_count)
             ' sfca_results_raw.json > sfca_results.json
             
             # Extract total violations from filtered violationCounts
@@ -90,23 +91,12 @@ jobs:
             
             # Debug: Show what was filtered
             original_count=$(jq '.violationCounts.total // 0' sfca_results_raw.json 2>/dev/null || echo "0")
-            filtered_count=$(jq '(.results // [] | map(.violations // [] | map(select(.rule == "NoTrailingWhitespace")) | length) | add // 0)' sfca_results_raw.json 2>/dev/null || echo "0")
-            echo "Original violations: $original_count, Filtered out: $filtered_count NoTrailingWhitespace violations"
+            echo "Original violations: $original_count, Filtered out: $trailing_whitespace_count NoTrailingWhitespace violations"
             
-            # Debug: Show JSON structure
-            echo "=== Filtered JSON Structure Debug ==="
-            echo "Keys in root:"
-            jq 'keys' sfca_results.json 2>/dev/null || echo "Failed to get keys"
-            echo "Violation counts after filtering:"
-            jq '.violationCounts' sfca_results.json 2>/dev/null || echo "No violation counts"
-            echo "Results structure:"
-            jq '.results | type' sfca_results.json 2>/dev/null || echo "No results"
-            if jq -e '.results[0]' sfca_results.json > /dev/null 2>&1; then
-              echo "First result keys:"
-              jq '.results[0] | keys' sfca_results.json 2>/dev/null || echo "Failed"
-              echo "Sample first result violations:"
-              jq '.results[0].violations[0:2]' sfca_results.json 2>/dev/null || echo "No violations in first result"
-            fi
+            # Debug: Show JSON structure to understand violation format
+            echo "=== Violation Structure Debug ==="
+            echo "Sample violation from results:"
+            jq '.results[0].violations[0] // "No violations found"' sfca_results.json 2>/dev/null || echo "Failed to get sample violation"
             echo "=== End Debug ==="
           else
             echo "scan-completed=false" >> $GITHUB_OUTPUT
@@ -148,103 +138,116 @@ jobs:
           echo "| **Total** | **$total_violations** | $([ $total_violations -eq 0 ] && echo "✅ **PASS**" || echo "❌ **REVIEW REQUIRED**") |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ $total_violations -gt 0 ]; then
+          if [ $total_violations -gt 0 ]; then 
             echo "## 🚨 Issues Found" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The following code quality issues were detected:" >> $GITHUB_STEP_SUMMARY
+            echo "The following code quality issues were detected (NoTrailingWhitespace excluded):" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Try to extract and display violations based on what we find
-            if jq -e '.results[0].violations[0]' sfca_results.json > /dev/null 2>&1; then
-              echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              
-              # Extract violations from results and group by rule
-              jq -r '
-                # Extract all violations from results (NoTrailingWhitespace already filtered out)
-                [.results[] | select(has("violations")) | .violations[]] |
-                # Group violations by rule
-                group_by(.rule) | 
-                map(
-                  # Get rule info from first violation in group
-                  . as $violations | 
-                  .[0] as $first |
-                  
-                  # Create severity emoji
-                  (if $first.severity == 1 then "🔴 Critical"
-                   elif $first.severity == 2 then "🟠 High"
-                   elif $first.severity == 3 then "🟡 Medium"
-                   elif $first.severity == 4 then "🔵 Low"
-                   elif $first.severity == 5 then "⚪ Info"
-                   else "❓ Unknown"
-                   end) as $severity_badge |
-                  
-                  # Create user-friendly rule description
-                  (if $first.rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Check"
-                   elif $first.rule == "AvoidHardcodingId" then "Avoid Hardcoded Salesforce IDs"
-                   elif $first.rule == "MethodNamingConventions" then "Method Naming Convention"
-                   elif $first.rule == "ClassNamingConventions" then "Class Naming Convention"
-                   elif $first.rule == "VariableNamingConventions" then "Variable Naming Convention"
-                   elif $first.rule == "AvoidGlobalModifier" then "Avoid Global Modifier"
-                   elif $first.rule == "AvoidDmlStatementsInLoops" then "DML Statements in Loops"
-                   elif $first.rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
-                   elif $first.rule == "CyclomaticComplexity" then "Code Complexity Too High"
-                   elif $first.rule == "StdCyclomaticComplexity" then "Method Complexity Too High"
-                   elif $first.rule == "TooManyFields" then "Too Many Class Fields"
-                   elif $first.rule == "EmptyIfStmt" then "Empty If Statement"
-                   elif $first.rule == "EmptyTryOrFinallyBlock" then "Empty Try/Finally Block"
-                   elif $first.rule == "UnusedLocalVariable" then "Unused Local Variable"
-                   elif $first.rule == "UnnecessaryModifier" then "Unnecessary Access Modifier"
-                   else $first.rule
-                   end) as $friendly_rule |
-                  
-                  # Create solution hint
-                  (if $first.rule == "ApexCRUDViolation" then "💡 **How to fix**: Add `WITH USER_MODE` to SOQL queries or check permissions before DML operations using `Schema.sObjectType.ObjectName__c.isAccessible()`"
-                   elif $first.rule == "AvoidHardcodingId" then "💡 **How to fix**: Use Custom Settings, Custom Metadata Types, or dynamic queries instead of hardcoded Salesforce IDs"
-                   elif $first.rule == "AvoidDmlStatementsInLoops" then "💡 **How to fix**: Move DML operations outside loops by collecting records in a list first, then perform bulk DML"
-                   elif $first.rule == "AvoidSoqlInLoops" then "💡 **How to fix**: Move SOQL queries outside loops or use Maps for data lookup to avoid governor limits"
-                   elif $first.rule == "CyclomaticComplexity" or $first.rule == "StdCyclomaticComplexity" then "💡 **How to fix**: Break down complex methods into smaller, focused methods with single responsibilities"
-                   elif $first.rule == "UnusedLocalVariable" then "💡 **How to fix**: Remove unused variables or use them appropriately in your code logic"
-                   elif $first.rule == "EmptyIfStmt" then "💡 **How to fix**: Add meaningful code to the if block or remove the empty statement"
-                   elif $first.rule == "MethodNamingConventions" then "💡 **How to fix**: Use camelCase for method names (e.g., `calculateTotal` instead of `Calculate_Total`)"
-                   elif $first.rule == "ClassNamingConventions" then "💡 **How to fix**: Use PascalCase for class names and make them descriptive"
-                   elif $first.rule == "VariableNamingConventions" then "💡 **How to fix**: Use camelCase for variable names and make them descriptive"
-                   else "💡 **How to fix**: Review Salesforce coding best practices and platform guidelines for this rule"
-                   end) as $solution |
-                  
-                  # Build the output
-                  "#### " + $severity_badge + " " + $friendly_rule + " (" + (length | tostring) + " occurrence" + (if length > 1 then "s" else "" end) + ")" +
-                  "\n" +
-                  "**Issue**: " + $first.message +
-                  "\n\n" +
-                  $solution +
-                  "\n\n" +
-                  "**Affected locations**:" +
-                  "\n" +
-                  (map(
-                    "- `" + (.fileName // .file // "Unknown") + "` **Line " + (.line // .locations[0].startLine // "?" | tostring) + "**" +
-                    (if .column // .locations[0].startColumn then " (Column " + (.column // .locations[0].startColumn | tostring) + ")" else "" end)
-                  ) | join("\n")) +
-                  "\n"
-                ) | join("\n")
-              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "**Failed to parse violations**" >> $GITHUB_STEP_SUMMARY
-              
-            else
-              echo "### ⚠️ Summary Only Available" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "Detailed violation information could not be parsed, but here's the summary:" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "- 🔴 **$critical_count Critical** security/performance issues" >> $GITHUB_STEP_SUMMARY
-              echo "- 🟠 **$high_count High** priority issues" >> $GITHUB_STEP_SUMMARY  
-              echo "- 🟡 **$medium_count Medium** priority issues" >> $GITHUB_STEP_SUMMARY
-              echo "- 🔵 **$low_count Low** priority issues" >> $GITHUB_STEP_SUMMARY
-              echo "- ⚪ **$info_count Info** style/formatting issues" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "Please run the Code Analyzer locally for detailed violation information:" >> $GITHUB_STEP_SUMMARY
-              echo '```bash' >> $GITHUB_STEP_SUMMARY
-              echo 'sf code-analyzer run --view detail --target "force-app/**/*.cls"' >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-            fi
+            # Create detailed violation table
+            echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Severity | Rule | File | Line | Column | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|------|------|------|--------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract violations and create table rows
+            jq -r '
+              [.results[] | select(has("violations")) | .violations[]] |
+              map(
+                # Get violation details
+                . as $violation |
+                
+                # Create severity badge
+                (if $violation.severity == 1 then "🔴 Critical"
+                 elif $violation.severity == 2 then "🟠 High"
+                 elif $violation.severity == 3 then "🟡 Medium"
+                 elif $violation.severity == 4 then "🔵 Low"
+                 elif $violation.severity == 5 then "⚪ Info"
+                 else "❓ Unknown"
+                 end) as $severity_badge |
+                
+                # Get file info
+                ($violation.fileName // $violation.file // "Unknown") as $file |
+                ($violation.line // $violation.locations[0].startLine // "?" | tostring) as $line |
+                ($violation.column // $violation.locations[0].startColumn // "-" | tostring) as $column |
+                
+                # Get rule name
+                $violation.rule as $rule |
+                
+                # Get message
+                ($violation.message // "No message") as $message |
+                
+                # Create fix suggestion based on rule
+                (if $violation.rule == "ApexCRUDViolation" then "Add WITH USER_MODE or check permissions"
+                 elif $violation.rule == "AvoidHardcodingId" then "Use Custom Settings/Metadata"
+                 elif $violation.rule == "AvoidDmlStatementsInLoops" then "Move DML outside loops"
+                 elif $violation.rule == "AvoidSoqlInLoops" then "Move SOQL outside loops"
+                 elif $violation.rule == "CyclomaticComplexity" or $violation.rule == "StdCyclomaticComplexity" then "Break into smaller methods"
+                 elif $violation.rule == "UnusedLocalVariable" then "Remove unused variable"
+                 elif $violation.rule == "EmptyIfStmt" then "Add code or remove statement"
+                 elif $violation.rule == "MethodNamingConventions" then "Use camelCase naming"
+                 elif $violation.rule == "ClassNamingConventions" then "Use PascalCase naming"
+                 elif $violation.rule == "VariableNamingConventions" then "Use camelCase naming"
+                 else "Follow Salesforce best practices"
+                 end) as $fix_suggestion |
+                
+                # Build table row
+                "| " + $severity_badge + " | `" + $rule + "` | `" + $file + "` | " + $line + " | " + $column + " | " + $message + " | " + $fix_suggestion + " |"
+              ) | .[]
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
+              echo "| ⚠️ Error | Parse Failed | - | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
+            }
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Add grouped summary by rule type
+            echo "### 📊 Summary by Rule Type" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Rule | Count | Severity | Description |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+            
+            jq -r '
+              [.results[] | select(has("violations")) | .violations[]] |
+              group_by(.rule) |
+              map(
+                .[0].rule as $rule |
+                length as $count |
+                (if .[0].severity == 1 then "🔴 Critical"
+                 elif .[0].severity == 2 then "🟠 High"
+                 elif .[0].severity == 3 then "🟡 Medium"
+                 elif .[0].severity == 4 then "🔵 Low"
+                 elif .[0].severity == 5 then "⚪ Info"
+                 else "❓ Unknown"
+                 end) as $severity |
+                
+                # Rule description
+                (if $rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Checks"
+                 elif $rule == "AvoidHardcodingId" then "Hardcoded Salesforce IDs"
+                 elif $rule == "AvoidDmlStatementsInLoops" then "DML Operations in Loops"
+                 elif $rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
+                 elif $rule == "CyclomaticComplexity" then "High Code Complexity"
+                 elif $rule == "StdCyclomaticComplexity" then "High Method Complexity"
+                 elif $rule == "UnusedLocalVariable" then "Unused Local Variables"
+                 elif $rule == "EmptyIfStmt" then "Empty If Statements"
+                 elif $rule == "MethodNamingConventions" then "Method Naming Issues"
+                 elif $rule == "ClassNamingConventions" then "Class Naming Issues"
+                 elif $rule == "VariableNamingConventions" then "Variable Naming Issues"
+                 else $rule
+                 end) as $description |
+                
+                "| `" + $rule + "` | " + ($count | tostring) + " | " + $severity + " | " + $description + " |"
+              ) | .[]
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
+              echo "| Parse Error | - | - | Could not group violations by rule |" >> $GITHUB_STEP_SUMMARY
+            }
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 💡 Quick Fix Guide" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Security Issues (Critical/High):** Focus on CRUD/FLS violations and hardcoded IDs first" >> $GITHUB_STEP_SUMMARY
+            echo "**Performance Issues:** Fix SOQL/DML in loops to avoid governor limits" >> $GITHUB_STEP_SUMMARY  
+            echo "**Code Quality:** Address complexity and naming convention issues" >> $GITHUB_STEP_SUMMARY
+            echo "**Style Issues:** Clean up unused variables and empty statements" >> $GITHUB_STEP_SUMMARY
             
           else
             echo "## ✅ Excellent Work!" >> $GITHUB_STEP_SUMMARY
@@ -284,7 +287,7 @@ jobs:
             echo "  • $low_count Low-priority issues"
             echo "  • $info_count Informational/style issues"
             echo ""
-            echo "💡 Check the 'Summary' tab above for detailed fix instructions."
+            echo "💡 Check the 'Summary' tab above for detailed violation table."
           else
             echo "✅ EXCELLENT: No violations found! Your code is clean. 🎉"
           fi
