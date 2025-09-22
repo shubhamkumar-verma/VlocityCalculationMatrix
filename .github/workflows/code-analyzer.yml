@@ -150,89 +150,101 @@ jobs:
             echo "| Severity | Rule | Description | File | Line | Column | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|------|-------------|------|------|--------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
 
+            # Dump one sample violation (debug) so we can see actual field names if parsing fails
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### Sample violation (raw JSON) for diagnostics" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            jq '.results[]?.violations[]? // .violations[]? | . as $v | $v' sfca_results.json | jq 'select(.) | . as $x | $x' -M | head -n 200 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo '"No sample violation (check JSON structure)"' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Robust extraction: support alternative field names (.rule, .ruleId, .name), messages and locations
             jq -r '
-              [.results[] | select(has("violations")) | .violations[]] |
+              # gather violations from possible locations
+              ( [ (.results[]? | .violations[]?) , (.violations[]?) ] | add // [] ) as $all |
+              $all |
               map(
-                . as $violation |
-                (if $violation.severity == 1 then "🔴 Critical"
-                 elif $violation.severity == 2 then "🟠 High"
-                 elif $violation.severity == 3 then "🟡 Medium"
-                 elif $violation.severity == 4 then "🔵 Low"
-                 elif $violation.severity == 5 then "⚪ Info"
-                 else "❓ Unknown"
-                 end) as $severity_badge |
-                ($violation.fileName // $violation.file // "Unknown") as $file |
-                ($violation.line // $violation.locations[0].startLine // "?" | tostring) as $line |
-                ($violation.column // $violation.locations[0].startColumn // "-" | tostring) as $column |
-                $violation.rule as $rule |
-                ($violation.message // "No message") as $message |
-                # Description mapping
-                (if $rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Checks"
-                 elif $rule == "AvoidHardcodingId" then "Hardcoded Salesforce IDs"
-                 elif $rule == "AvoidDmlStatementsInLoops" then "DML Operations in Loops"
-                 elif $rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
-                 elif $rule == "CyclomaticComplexity" then "High Code Complexity"
-                 elif $rule == "StdCyclomaticComplexity" then "High Method Complexity"
-                 elif $rule == "UnusedLocalVariable" then "Unused Local Variables"
-                 elif $rule == "EmptyIfStmt" then "Empty If Statements"
-                 elif $rule == "MethodNamingConventions" then "Method Naming Issues"
-                 elif $rule == "ClassNamingConventions" then "Class Naming Issues"
-                 elif $rule == "VariableNamingConventions" then "Variable Naming Issues"
-                 else $rule
-                 end) as $description |
-                (if $rule == "ApexCRUDViolation" then "Add WITH USER MODE or check permissions"
-                 elif $rule == "AvoidHardcodingId" then "Use Custom Settings/Metadata"
-                 elif $rule == "AvoidDmlStatementsInLoops" then "Move DML outside loops"
-                 elif $rule == "AvoidSoqlInLoops" then "Move SOQL outside loops"
-                 elif $rule == "CyclomaticComplexity" or $rule == "StdCyclomaticComplexity" then "Break into smaller methods"
-                 elif $rule == "UnusedLocalVariable" then "Remove unused variable"
-                 elif $rule == "EmptyIfStmt" then "Add code or remove statement"
-                 elif $rule == "MethodNamingConventions" then "Use camelCase naming"
-                 elif $rule == "ClassNamingConventions" then "Use PascalCase naming"
-                 elif $rule == "VariableNamingConventions" then "Use camelCase naming"
-                 else "Follow Salesforce best practices"
-                 end) as $fix_suggestion |
-                "| " + $severity_badge + " | `" + $rule + "` | " + $description + " | `" + $file + "` | " + $line + " | " + $column + " | " + $message + " | " + $fix_suggestion + " |"
+                . as $vi |
+                # normalize fields (rule, message, file, line, column)
+                ( ($vi.rule // $vi.ruleId // $vi.name // "Unknown") ) as $rule |
+                ( ($vi.message // $vi.desc // $vi.description // "No message") | gsub("\n"; " ") ) as $message |
+                ( ($vi.fileName // $vi.file // ($vi.locations[0].file // $vi.locations[0].fileName) // "Unknown") ) as $file |
+                ( ($vi.line // $vi.locations[0].startLine // "?") | tostring ) as $line |
+                ( ($vi.column // $vi.locations[0].startColumn // "-") | tostring ) as $column |
+                ( if ($vi.severity|type) == "string" then ($vi.severity|tonumber? // ($vi.severity)) else ($vi.severity // 5) end ) as $sevnum |
+                # severity badge
+                ( if $sevnum == 1 then "🔴 Critical"
+                  elif $sevnum == 2 then "🟠 High"
+                  elif $sevnum == 3 then "🟡 Medium"
+                  elif $sevnum == 4 then "🔵 Low"
+                  elif $sevnum == 5 then "⚪ Info"
+                  else "❓ Unknown" end ) as $severity_badge |
+                # description mapping using substring tests (robust if rule contains prefixes)
+                ( if ($rule | test("ApexCRUDViolation")) then "Missing CRUD/FLS Security Checks"
+                  elif ($rule | test("AvoidHardcodingId")) then "Hardcoded Salesforce IDs"
+                  elif ($rule | test("AvoidDmlStatementsInLoops")) then "DML Operations in Loops"
+                  elif ($rule | test("AvoidSoqlInLoops")) then "SOQL Queries in Loops"
+                  elif ($rule | test("CyclomaticComplexity")) then "High Code Complexity"
+                  elif ($rule | test("StdCyclomaticComplexity")) then "High Method Complexity"
+                  elif ($rule | test("TooManyFields")) then "Too Many Class Fields"
+                  elif ($rule | test("UnusedLocalVariable")) then "Unused Local Variables"
+                  elif ($rule | test("EmptyIfStmt")) then "Empty If Statements"
+                  elif ($rule | test("EmptyTryOrFinallyBlock")) then "Empty Try/Finally Block"
+                  elif ($rule | test("MethodNamingConventions")) then "Method Naming Conventions"
+                  elif ($rule | test("ClassNamingConventions")) then "Class Naming Conventions"
+                  elif ($rule | test("VariableNamingConventions")) then "Variable Naming Conventions"
+                  else $rule end ) as $description |
+                # fix suggestion mapping
+                ( if ($rule | test("ApexCRUDViolation")) then "Add WITH USER_MODE or check permissions"
+                  elif ($rule | test("AvoidHardcodingId")) then "Use Custom Settings/Metadata"
+                  elif ($rule | test("AvoidDmlStatementsInLoops")) then "Move DML outside loops"
+                  elif ($rule | test("AvoidSoqlInLoops")) then "Move SOQL outside loops"
+                  elif ($rule | test("CyclomaticComplexity") or ($rule | test("StdCyclomaticComplexity"))) then "Break into smaller methods"
+                  elif ($rule | test("UnusedLocalVariable")) then "Remove unused variable"
+                  elif ($rule | test("EmptyIfStmt")) then "Add code or remove statement"
+                  else "Follow Salesforce best practices" end ) as $fix_suggestion |
+                # build markdown table row
+                "| " + $severity_badge + " | `" + ($rule|gsub("`"; "\\`")) + "` | " + ($description|gsub("\\|"; "/")) + " | `" + ($file|gsub("`"; "\\`")) + "` | " + $line + " | " + $column + " | " + ($message|gsub("\\|"; "/")|gsub("`"; "'")) + " | " + ($fix_suggestion|gsub("\\|"; "/")) + " |"
               ) | .[]
             ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
               echo "| ⚠️ Error | Parse Failed | - | - | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
             }
-            
+
             echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Add grouped summary by rule type
+
+            # Add grouped summary by rule type (uses same normalization)
             echo "### 📊 Summary by Rule Type" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Rule | Count | Severity | Description |" >> $GITHUB_STEP_SUMMARY
             echo "|------|-------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
 
             jq -r '
-              [.results[] | select(has("violations")) | .violations[]] |
-              group_by(.rule) |
+              ( [ (.results[]? | .violations[]?), (.violations[]?) ] | add // [] ) as $all |
+              $all | group_by( ( .rule // .ruleId // .name // "Unknown" ) ) |
               map(
-                .[0].rule as $rule |
-                length as $count |
-                (if .[0].severity == 1 then "🔴 Critical"
-                 elif .[0].severity == 2 then "🟠 High"
-                 elif .[0].severity == 3 then "🟡 Medium"
-                 elif .[0].severity == 4 then "🔵 Low"
-                 elif .[0].severity == 5 then "⚪ Info"
-                 else "❓ Unknown"
-                 end) as $severity |
-                (if $rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Checks"
-                 elif $rule == "AvoidHardcodingId" then "Hardcoded Salesforce IDs"
-                 elif $rule == "AvoidDmlStatementsInLoops" then "DML Operations in Loops"
-                 elif $rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
-                 elif $rule == "CyclomaticComplexity" then "High Code Complexity"
-                 elif $rule == "StdCyclomaticComplexity" then "High Method Complexity"
-                 elif $rule == "UnusedLocalVariable" then "Unused Local Variables"
-                 elif $rule == "EmptyIfStmt" then "Empty If Statements"
-                 elif $rule == "MethodNamingConventions" then "Method Naming Issues"
-                 elif $rule == "ClassNamingConventions" then "Class Naming Issues"
-                 elif $rule == "VariableNamingConventions" then "Variable Naming Issues"
-                 else $rule
-                 end) as $description |
-                "| `" + $rule + "` | " + ($count | tostring) + " | " + $severity + " | " + $description + " |"
+                .[0] as $first |
+                ( ($first.rule // $first.ruleId // $first.name // "Unknown") ) as $rule |
+                ( length ) as $count |
+                ( ($first.severity // 5) ) as $sevnum |
+                ( if $sevnum == 1 then "🔴 Critical"
+                  elif $sevnum == 2 then "🟠 High"
+                  elif $sevnum == 3 then "🟡 Medium"
+                  elif $sevnum == 4 then "🔵 Low"
+                  elif $sevnum == 5 then "⚪ Info"
+                  else "❓ Unknown" end ) as $severity_badge |
+                ( if ($rule | test("ApexCRUDViolation")) then "Missing CRUD/FLS Security Checks"
+                  elif ($rule | test("AvoidHardcodingId")) then "Hardcoded Salesforce IDs"
+                  elif ($rule | test("AvoidDmlStatementsInLoops")) then "DML Operations in Loops"
+                  elif ($rule | test("AvoidSoqlInLoops")) then "SOQL Queries in Loops"
+                  elif ($rule | test("CyclomaticComplexity")) then "High Code Complexity"
+                  elif ($rule | test("StdCyclomaticComplexity")) then "High Method Complexity"
+                  elif ($rule | test("UnusedLocalVariable")) then "Unused Local Variables"
+                  elif ($rule | test("EmptyIfStmt")) then "Empty If Statements"
+                  elif ($rule | test("MethodNamingConventions")) then "Method Naming Issues"
+                  elif ($rule | test("ClassNamingConventions")) then "Class Naming Issues"
+                  elif ($rule | test("VariableNamingConventions")) then "Variable Naming Issues"
+                  else $rule end ) as $description |
+                "| `" + ($rule|gsub("`"; "\\`")) + "` | " + ($count|tostring) + " | " + $severity_badge + " | " + ($description|gsub("\\|"; "/")) + " |"
               ) | .[]
             ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
               echo "| Parse Error | - | - | Could not group violations by rule |" >> $GITHUB_STEP_SUMMARY
