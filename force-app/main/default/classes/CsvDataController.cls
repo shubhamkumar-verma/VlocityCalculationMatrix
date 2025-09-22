@@ -155,7 +155,6 @@ public with sharing class CsvDataController {
             response.matrixVersionId = matrixVersionId;
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
             return response;
-            
         } catch (Exception e) {
             System.debug('Error in getMatrixCsvData: ' + e.getMessage());
             System.debug('Stack trace: ' + e.getStackTraceString());
