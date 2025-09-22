@@ -108,6 +108,7 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixVersionId 
                 LIMIT 1
             ];
+            
             // Get CSV data from CalculationMatrixRow records
             List<vlocity_ins__CalculationMatrixRow__c> allRows = [
                 SELECT Id, Name, vlocity_ins__InputData__c, vlocity_ins__OutputData__c
@@ -115,8 +116,10 @@ public with sharing class CsvDataController {
                 WHERE vlocity_ins__CalculationMatrixVersionId__c = :matrixVersionId
                 ORDER BY Name ASC
             ];
+            
             // Parse stored CSV data from first row's InputData or reconstruct from rows
             List<List<String>> parsedCsv = reconstructCsvFromRows(allRows);
+            
             if (parsedCsv.isEmpty()) {
                 throw new AuraHandledException('No data found in calculation matrix version.');
             }
@@ -132,6 +135,7 @@ public with sharing class CsvDataController {
             Integer totalPages = totalRecords > 0 ? (Integer) Math.ceil((Decimal) totalRecords / pageSize) : 0;
             Integer startIndex = (pageNumber - 1) * pageSize;
             Integer endIndex = Math.min(startIndex + pageSize, totalRecords);
+            
             // Get current page data
             List<List<String>> pageData = new List<List<String>>();
             for (Integer i = startIndex; i < endIndex; i++) {
@@ -139,8 +143,10 @@ public with sharing class CsvDataController {
                     pageData.add(allDataRows[i]);
                 }
             }
+            
             // Convert to map format for Lightning Data Table
             List<Map<String, Object>> records = convertToRecords(headers, pageData, startIndex);
+            
             // Create response
             CsvDataResponse response = new CsvDataResponse();
             response.records = records;
@@ -154,7 +160,9 @@ public with sharing class CsvDataController {
             response.fileName = matrixVersion.Name + '_v' + matrixVersion.vlocity_ins__VersionNumber__c + '.csv';
             response.matrixVersionId = matrixVersionId;
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
+            
             return response;
+            
         } catch (Exception e) {
             System.debug('Error in getMatrixCsvData: ' + e.getMessage());
             System.debug('Stack trace: ' + e.getStackTraceString());
@@ -177,6 +185,7 @@ public with sharing class CsvDataController {
             if (!fileName.toLowerCase().endsWith('.csv')) {
                 throw new AuraHandledException('Only CSV files are allowed.');
             }
+            
             // Decode CSV content
             String csvContent = EncodingUtil.base64Decode(fileContent).toString();
             

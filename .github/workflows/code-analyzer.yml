@@ -125,6 +125,17 @@ jobs:
           echo "Violation counts extracted (NoTrailingWhitespace excluded):"
           echo "Critical: $critical_count, High: $high_count, Medium: $medium_count, Low: $low_count, Info: $info_count"
           
+          # Debug: Check violation structure
+          echo "=== Debugging Violation Structure ==="
+          echo "Results array length:"
+          jq '.results | length' sfca_results.json 2>/dev/null || echo "No results array"
+          echo "Sample violations structure:"
+          jq '.results[0].violations[0:3] // []' sfca_results.json 2>/dev/null || echo "No violations in first result"
+          echo "All violations count:"
+          violations_found=$(jq '[.results[] | select(has("violations")) | .violations[]] | length' sfca_results.json 2>/dev/null || echo "0")
+          echo "Total violations found in results: $violations_found"
+          echo "=== End Debug ==="
+          
           # Summary table
           echo "## 📊 Violation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -144,102 +155,137 @@ jobs:
             echo "The following code quality issues were detected (NoTrailingWhitespace excluded):" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Create detailed violation table
-            echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Severity | Rule | File | Line | Column | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
-            echo "|----------|------|------|------|--------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
-            
-            # Extract violations and create table rows
-            jq -r '
-              [.results[] | select(has("violations")) | .violations[]] |
-              map(
-                # Get violation details
-                . as $violation |
-                
-                # Create severity badge
-                (if $violation.severity == 1 then "🔴 Critical"
-                 elif $violation.severity == 2 then "🟠 High"
-                 elif $violation.severity == 3 then "🟡 Medium"
-                 elif $violation.severity == 4 then "🔵 Low"
-                 elif $violation.severity == 5 then "⚪ Info"
-                 else "❓ Unknown"
-                 end) as $severity_badge |
-                
-                # Get file info
-                ($violation.fileName // $violation.file // "Unknown") as $file |
-                ($violation.line // $violation.locations[0].startLine // "?" | tostring) as $line |
-                ($violation.column // $violation.locations[0].startColumn // "-" | tostring) as $column |
-                
-                # Get rule name
-                $violation.rule as $rule |
-                
-                # Get message
-                ($violation.message // "No message") as $message |
-                
-                # Create fix suggestion based on rule
-                (if $violation.rule == "ApexCRUDViolation" then "Add WITH USER_MODE or check permissions"
-                 elif $violation.rule == "AvoidHardcodingId" then "Use Custom Settings/Metadata"
-                 elif $violation.rule == "AvoidDmlStatementsInLoops" then "Move DML outside loops"
-                 elif $violation.rule == "AvoidSoqlInLoops" then "Move SOQL outside loops"
-                 elif $violation.rule == "CyclomaticComplexity" or $violation.rule == "StdCyclomaticComplexity" then "Break into smaller methods"
-                 elif $violation.rule == "UnusedLocalVariable" then "Remove unused variable"
-                 elif $violation.rule == "EmptyIfStmt" then "Add code or remove statement"
-                 elif $violation.rule == "MethodNamingConventions" then "Use camelCase naming"
-                 elif $violation.rule == "ClassNamingConventions" then "Use PascalCase naming"
-                 elif $violation.rule == "VariableNamingConventions" then "Use camelCase naming"
-                 else "Follow Salesforce best practices"
-                 end) as $fix_suggestion |
-                
-                # Build table row
-                "| " + $severity_badge + " | `" + $rule + "` | `" + $file + "` | " + $line + " | " + $column + " | " + $message + " | " + $fix_suggestion + " |"
-              ) | .[]
-            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
-              echo "| ⚠️ Error | Parse Failed | - | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
-            }
-            
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Add grouped summary by rule type
-            echo "### 📊 Summary by Rule Type" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Rule | Count | Severity | Description |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|-------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
-            
-            jq -r '
-              [.results[] | select(has("violations")) | .violations[]] |
-              group_by(.rule) |
-              map(
-                .[0].rule as $rule |
-                length as $count |
-                (if .[0].severity == 1 then "🔴 Critical"
-                 elif .[0].severity == 2 then "🟠 High"
-                 elif .[0].severity == 3 then "🟡 Medium"
-                 elif .[0].severity == 4 then "🔵 Low"
-                 elif .[0].severity == 5 then "⚪ Info"
-                 else "❓ Unknown"
-                 end) as $severity |
-                
-                # Rule description
-                (if $rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Checks"
-                 elif $rule == "AvoidHardcodingId" then "Hardcoded Salesforce IDs"
-                 elif $rule == "AvoidDmlStatementsInLoops" then "DML Operations in Loops"
-                 elif $rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
-                 elif $rule == "CyclomaticComplexity" then "High Code Complexity"
-                 elif $rule == "StdCyclomaticComplexity" then "High Method Complexity"
-                 elif $rule == "UnusedLocalVariable" then "Unused Local Variables"
-                 elif $rule == "EmptyIfStmt" then "Empty If Statements"
-                 elif $rule == "MethodNamingConventions" then "Method Naming Issues"
-                 elif $rule == "ClassNamingConventions" then "Class Naming Issues"
-                 elif $rule == "VariableNamingConventions" then "Variable Naming Issues"
-                 else $rule
-                 end) as $description |
-                
-                "| `" + $rule + "` | " + ($count | tostring) + " | " + $severity + " | " + $description + " |"
-              ) | .[]
-            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
-              echo "| Parse Error | - | - | Could not group violations by rule |" >> $GITHUB_STEP_SUMMARY
-            }
+            # Check if we have violations to display
+            if [ $violations_found -gt 0 ]; then
+              # Create detailed violation table
+              echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Severity | Rule | File | Line | Column | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
+              echo "|----------|------|------|------|--------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
+              
+              # Extract violations and create table rows with better error handling
+              jq -r '
+                [.results[] | select(has("violations")) | .violations[]] |
+                map(
+                  # Get violation details with fallbacks
+                  . as $violation |
+                  
+                  # Create severity badge
+                  (if ($violation.severity // 0) == 1 then "🔴 Critical"
+                   elif ($violation.severity // 0) == 2 then "🟠 High"
+                   elif ($violation.severity // 0) == 3 then "🟡 Medium"
+                   elif ($violation.severity // 0) == 4 then "🔵 Low"
+                   elif ($violation.severity // 0) == 5 then "⚪ Info"
+                   else "❓ Unknown (" + ($violation.severity // "?" | tostring) + ")"
+                   end) as $severity_badge |
+                  
+                  # Get file info with multiple fallback options
+                  ($violation.fileName // $violation.file // $violation.location // "Unknown") as $file |
+                  ($violation.line // $violation.startLine // ($violation.locations[0].startLine // "?") | tostring) as $line |
+                  ($violation.column // $violation.startColumn // ($violation.locations[0].startColumn // "-") | tostring) as $column |
+                  
+                  # Get rule name
+                  ($violation.rule // "UnknownRule") as $rule |
+                  
+                  # Get message (escape pipe characters)
+                  ($violation.message // "No message available" | gsub("\\|"; "&#124;")) as $message |
+                  
+                  # Create fix suggestion based on rule
+                  (if $rule == "ApexCRUDViolation" then "Add WITH USER_MODE or check permissions"
+                   elif $rule == "AvoidHardcodingId" then "Use Custom Settings/Metadata"
+                   elif $rule == "AvoidDmlStatementsInLoops" then "Move DML outside loops"
+                   elif $rule == "AvoidSoqlInLoops" then "Move SOQL outside loops"
+                   elif $rule == "CyclomaticComplexity" or $rule == "StdCyclomaticComplexity" then "Break into smaller methods"
+                   elif $rule == "UnusedLocalVariable" then "Remove unused variable"
+                   elif $rule == "EmptyIfStmt" then "Add code or remove statement"
+                   elif $rule == "MethodNamingConventions" then "Use camelCase naming"
+                   elif $rule == "ClassNamingConventions" then "Use PascalCase naming"
+                   elif $rule == "VariableNamingConventions" then "Use camelCase naming"
+                   else "Follow Salesforce best practices"
+                   end) as $fix_suggestion |
+                  
+                  # Build table row with proper escaping
+                  "| " + $severity_badge + " | `" + $rule + "` | `" + ($file | split("/")[-1]) + "` | " + $line + " | " + $column + " | " + $message + " | " + $fix_suggestion + " |"
+                ) | .[]
+              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null
+              
+              # Check if the jq command succeeded
+              if [ $? -ne 0 ]; then
+                echo "| ⚠️ Error | Parse Failed | - | - | - | Could not parse violation details from JSON | Check debug logs |" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "**Debug Info:** JSON parsing failed. Raw violation data:" >> $GITHUB_STEP_SUMMARY
+                echo '```json' >> $GITHUB_STEP_SUMMARY
+                jq '.results[0].violations[0:5] // []' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not display sample violations" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              echo "" >> $GITHUB_STEP_SUMMARY
+              
+              # Add grouped summary by rule type with better error handling
+              echo "### 📊 Summary by Rule Type" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Rule | Count | Severity | Description |" >> $GITHUB_STEP_SUMMARY
+              echo "|------|-------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+              
+              jq -r '
+                [.results[] | select(has("violations")) | .violations[]] |
+                group_by(.rule // "UnknownRule") |
+                map(
+                  (.[0].rule // "UnknownRule") as $rule |
+                  length as $count |
+                  (if (.[0].severity // 0) == 1 then "🔴 Critical"
+                   elif (.[0].severity // 0) == 2 then "🟠 High"
+                   elif (.[0].severity // 0) == 3 then "🟡 Medium"
+                   elif (.[0].severity // 0) == 4 then "🔵 Low"
+                   elif (.[0].severity // 0) == 5 then "⚪ Info"
+                   else "❓ Unknown"
+                   end) as $severity |
+                  
+                  # Rule description
+                  (if $rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Checks"
+                   elif $rule == "AvoidHardcodingId" then "Hardcoded Salesforce IDs"
+                   elif $rule == "AvoidDmlStatementsInLoops" then "DML Operations in Loops"
+                   elif $rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
+                   elif $rule == "CyclomaticComplexity" then "High Code Complexity"
+                   elif $rule == "StdCyclomaticComplexity" then "High Method Complexity"
+                   elif $rule == "UnusedLocalVariable" then "Unused Local Variables"
+                   elif $rule == "EmptyIfStmt" then "Empty If Statements"
+                   elif $rule == "MethodNamingConventions" then "Method Naming Issues"
+                   elif $rule == "ClassNamingConventions" then "Class Naming Issues"
+                   elif $rule == "VariableNamingConventions" then "Variable Naming Issues"
+                   else ($rule + " violations")
+                   end) as $description |
+                  
+                  "| `" + $rule + "` | " + ($count | tostring) + " | " + $severity + " | " + $description + " |"
+                ) | .[]
+              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null
+              
+              # Check if the summary by rule succeeded
+              if [ $? -ne 0 ]; then
+                echo "| Parse Error | - | - | Could not group violations by rule type |" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+            else
+              echo "### ⚠️ No Detailed Violations Available" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Violation counts indicate issues exist, but detailed violation data could not be extracted." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Summary from violation counts:**" >> $GITHUB_STEP_SUMMARY
+              echo "- 🔴 **$critical_count Critical** security/performance issues" >> $GITHUB_STEP_SUMMARY
+              echo "- 🟠 **$high_count High** priority issues" >> $GITHUB_STEP_SUMMARY  
+              echo "- 🟡 **$medium_count Medium** priority issues" >> $GITHUB_STEP_SUMMARY
+              echo "- 🔵 **$low_count Low** priority issues" >> $GITHUB_STEP_SUMMARY
+              echo "- ⚪ **$info_count Info** style/formatting issues" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Debugging Info:**" >> $GITHUB_STEP_SUMMARY
+              echo '```json' >> $GITHUB_STEP_SUMMARY
+              echo "JSON structure keys:" >> $GITHUB_STEP_SUMMARY
+              jq 'keys' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not show JSON keys" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "First result structure:" >> $GITHUB_STEP_SUMMARY
+              jq '.results[0] | keys // []' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No results structure" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
             
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 💡 Quick Fix Guide" >> $GITHUB_STEP_SUMMARY
