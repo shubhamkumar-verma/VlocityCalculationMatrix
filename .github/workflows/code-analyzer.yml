@@ -50,39 +50,62 @@ jobs:
           formatted_files=$(echo "$changed_files" | tr ' ' ',')
           echo "target-files=$formatted_files" >> $GITHUB_OUTPUT
 
-      # Step 3: Run Code Analyzer with custom output handling
+      # Step 3: Run Code Analyzer with post-processing to exclude NoTrailingWhitespace
       - name: 'Run Salesforce Code Analyzer on changed files'
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         continue-on-error: true
         id: scan-step
         run: |
-          # Run the analyzer with NoTrailingWhitespace rule excluded
+          # Run the analyzer normally first
           sf code-analyzer run \
             --view detail \
-            --output-file sfca_results.json \
-            --target "${{ steps.prepare-files.outputs.target-files }}" \
-            --rule-filter="!NoTrailingWhitespace"
+            --output-file sfca_results_raw.json \
+            --target "${{ steps.prepare-files.outputs.target-files }}"
           
-          # Check if results file exists and count violations
-          if [ -f sfca_results.json ]; then
+          # Check if results file exists
+          if [ -f sfca_results_raw.json ]; then
             echo "scan-completed=true" >> $GITHUB_OUTPUT
             
-            # Extract total violations from violationCounts
+            # Filter out NoTrailingWhitespace violations from the JSON
+            jq '
+              # Calculate how many NoTrailingWhitespace violations to subtract
+              (.results // [] | map(.violations // [] | map(select(.rule == "NoTrailingWhitespace")) | length) | add // 0) as $trailing_whitespace_count |
+              
+              # Filter violations from results array
+              .results = (.results // [] | map(
+                if has("violations") then
+                  .violations = (.violations | map(select(.rule != "NoTrailingWhitespace")))
+                else . end
+              )) |
+              
+              # Update violation counts - subtract the NoTrailingWhitespace count from total and sev5
+              .violationCounts.total = (.violationCounts.total - $trailing_whitespace_count) |
+              .violationCounts.sev5 = (.violationCounts.sev5 - $trailing_whitespace_count)
+            ' sfca_results_raw.json > sfca_results.json
+            
+            # Extract total violations from filtered violationCounts
             total_violations=$(jq '.violationCounts.total // 0' sfca_results.json 2>/dev/null || echo "0")
-            echo "Total violations found: $total_violations"
+            echo "Total violations found (after filtering out NoTrailingWhitespace): $total_violations"
             echo "num-violations=$total_violations" >> $GITHUB_OUTPUT
             
+            # Debug: Show what was filtered
+            original_count=$(jq '.violationCounts.total // 0' sfca_results_raw.json 2>/dev/null || echo "0")
+            filtered_count=$(jq '(.results // [] | map(.violations // [] | map(select(.rule == "NoTrailingWhitespace")) | length) | add // 0)' sfca_results_raw.json 2>/dev/null || echo "0")
+            echo "Original violations: $original_count, Filtered out: $filtered_count NoTrailingWhitespace violations"
+            
             # Debug: Show JSON structure
-            echo "=== JSON Structure Debug ==="
+            echo "=== Filtered JSON Structure Debug ==="
             echo "Keys in root:"
             jq 'keys' sfca_results.json 2>/dev/null || echo "Failed to get keys"
+            echo "Violation counts after filtering:"
+            jq '.violationCounts' sfca_results.json 2>/dev/null || echo "No violation counts"
             echo "Results structure:"
             jq '.results | type' sfca_results.json 2>/dev/null || echo "No results"
             if jq -e '.results[0]' sfca_results.json > /dev/null 2>&1; then
               echo "First result keys:"
               jq '.results[0] | keys' sfca_results.json 2>/dev/null || echo "Failed"
-              echo "Sample first result:"
-              jq '.results[0]' sfca_results.json 2>/dev/null || echo "Failed"
+              echo "Sample first result violations:"
+              jq '.results[0].violations[0:2]' sfca_results.json 2>/dev/null || echo "No violations in first result"
             fi
             echo "=== End Debug ==="
           else
@@ -97,6 +120,8 @@ jobs:
         run: |
           echo "# 🔍 Code Quality Analysis Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_NoTrailingWhitespace violations have been excluded from this report._" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
           total_violations=${{ steps.scan-step.outputs.num-violations }}
           
@@ -107,7 +132,7 @@ jobs:
           low_count=$(jq '.violationCounts.sev4 // 0' sfca_results.json 2>/dev/null || echo "0")
           info_count=$(jq '.violationCounts.sev5 // 0' sfca_results.json 2>/dev/null || echo "0")
           
-          echo "Violation counts extracted:"
+          echo "Violation counts extracted (NoTrailingWhitespace excluded):"
           echo "Critical: $critical_count, High: $high_count, Medium: $medium_count, Low: $low_count, Info: $info_count"
           
           # Summary table
@@ -129,49 +154,14 @@ jobs:
             echo "The following code quality issues were detected:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Try different approaches to extract violations
-            echo "=== Debugging violation extraction ==="
-            
-            # Check if we have results array
-            results_count=$(jq '.results | length' sfca_results.json 2>/dev/null || echo "0")
-            echo "Results array length: $results_count"
-            
-            # Try to find violations in different structures
-            if [ $results_count -gt 0 ]; then
-              echo "Checking results structure..."
-              
-              # Look for violations in first result
-              first_result_violations=$(jq '.results[0].violations // [] | length' sfca_results.json 2>/dev/null || echo "0")
-              echo "Violations in first result: $first_result_violations"
-              
-              if [ $first_result_violations -gt 0 ]; then
-                echo "Found violations in .results[0].violations"
-                # Show sample violation
-                echo "Sample violation:"
-                jq '.results[0].violations[0]' sfca_results.json 2>/dev/null || echo "Failed to get sample"
-              fi
-            fi
-            
-            # Check if there's a top-level violations array
-            top_level_violations=$(jq '.violations // [] | length' sfca_results.json 2>/dev/null || echo "0")
-            echo "Top-level violations count: $top_level_violations"
-            
-            if [ $top_level_violations -gt 0 ]; then
-              echo "Found violations in .violations"
-              echo "Sample top-level violation:"
-              jq '.violations[0]' sfca_results.json 2>/dev/null || echo "Failed to get sample"
-            fi
-            
-            echo "=== End debugging ==="
-            
             # Try to extract and display violations based on what we find
             if jq -e '.results[0].violations[0]' sfca_results.json > /dev/null 2>&1; then
-              echo "### 📋 Detailed Violations (from .results)" >> $GITHUB_STEP_SUMMARY
+              echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               
               # Extract violations from results and group by rule
               jq -r '
-                # Extract all violations from results
+                # Extract all violations from results (NoTrailingWhitespace already filtered out)
                 [.results[] | select(has("violations")) | .violations[]] |
                 # Group violations by rule
                 group_by(.rule) | 
@@ -190,8 +180,7 @@ jobs:
                    end) as $severity_badge |
                   
                   # Create user-friendly rule description
-                  (if $first.rule == "NoTrailingWhitespace" then "Remove Trailing Whitespace"
-                   elif $first.rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Check"
+                  (if $first.rule == "ApexCRUDViolation" then "Missing CRUD/FLS Security Check"
                    elif $first.rule == "AvoidHardcodingId" then "Avoid Hardcoded Salesforce IDs"
                    elif $first.rule == "MethodNamingConventions" then "Method Naming Convention"
                    elif $first.rule == "ClassNamingConventions" then "Class Naming Convention"
@@ -201,16 +190,26 @@ jobs:
                    elif $first.rule == "AvoidSoqlInLoops" then "SOQL Queries in Loops"
                    elif $first.rule == "CyclomaticComplexity" then "Code Complexity Too High"
                    elif $first.rule == "StdCyclomaticComplexity" then "Method Complexity Too High"
+                   elif $first.rule == "TooManyFields" then "Too Many Class Fields"
+                   elif $first.rule == "EmptyIfStmt" then "Empty If Statement"
+                   elif $first.rule == "EmptyTryOrFinallyBlock" then "Empty Try/Finally Block"
+                   elif $first.rule == "UnusedLocalVariable" then "Unused Local Variable"
+                   elif $first.rule == "UnnecessaryModifier" then "Unnecessary Access Modifier"
                    else $first.rule
                    end) as $friendly_rule |
                   
                   # Create solution hint
-                  (if $first.rule == "NoTrailingWhitespace" then "💡 **How to fix**: Remove extra spaces at the end of lines. In VS Code: Settings → Search \"trim trailing whitespace\" → Enable \"Files: Trim Trailing Whitespace\""
-                   elif $first.rule == "ApexCRUDViolation" then "💡 **How to fix**: Add `WITH USER_MODE` to SOQL queries or check permissions before DML operations"
-                   elif $first.rule == "AvoidHardcodingId" then "💡 **How to fix**: Use Custom Settings, Custom Metadata, or dynamic queries instead of hardcoded IDs"
-                   elif $first.rule == "AvoidDmlStatementsInLoops" then "💡 **How to fix**: Move DML operations outside loops by collecting records in a list first"
-                   elif $first.rule == "AvoidSoqlInLoops" then "💡 **How to fix**: Move SOQL queries outside loops or use Maps for data lookup"
-                   else "💡 **How to fix**: Review Salesforce coding best practices for this rule"
+                  (if $first.rule == "ApexCRUDViolation" then "💡 **How to fix**: Add `WITH USER_MODE` to SOQL queries or check permissions before DML operations using `Schema.sObjectType.ObjectName__c.isAccessible()`"
+                   elif $first.rule == "AvoidHardcodingId" then "💡 **How to fix**: Use Custom Settings, Custom Metadata Types, or dynamic queries instead of hardcoded Salesforce IDs"
+                   elif $first.rule == "AvoidDmlStatementsInLoops" then "💡 **How to fix**: Move DML operations outside loops by collecting records in a list first, then perform bulk DML"
+                   elif $first.rule == "AvoidSoqlInLoops" then "💡 **How to fix**: Move SOQL queries outside loops or use Maps for data lookup to avoid governor limits"
+                   elif $first.rule == "CyclomaticComplexity" or $first.rule == "StdCyclomaticComplexity" then "💡 **How to fix**: Break down complex methods into smaller, focused methods with single responsibilities"
+                   elif $first.rule == "UnusedLocalVariable" then "💡 **How to fix**: Remove unused variables or use them appropriately in your code logic"
+                   elif $first.rule == "EmptyIfStmt" then "💡 **How to fix**: Add meaningful code to the if block or remove the empty statement"
+                   elif $first.rule == "MethodNamingConventions" then "💡 **How to fix**: Use camelCase for method names (e.g., `calculateTotal` instead of `Calculate_Total`)"
+                   elif $first.rule == "ClassNamingConventions" then "💡 **How to fix**: Use PascalCase for class names and make them descriptive"
+                   elif $first.rule == "VariableNamingConventions" then "💡 **How to fix**: Use camelCase for variable names and make them descriptive"
+                   else "💡 **How to fix**: Review Salesforce coding best practices and platform guidelines for this rule"
                    end) as $solution |
                   
                   # Build the output
@@ -228,67 +227,20 @@ jobs:
                   ) | join("\n")) +
                   "\n"
                 ) | join("\n")
-              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "**Failed to parse violations from .results**" >> $GITHUB_STEP_SUMMARY
-              
-            elif jq -e '.violations[0]' sfca_results.json > /dev/null 2>&1; then
-              echo "### 📋 Detailed Violations (from .violations)" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              
-              # Extract violations from top-level violations array
-              jq -r '
-                .violations |
-                group_by(.rule) | 
-                map(
-                  . as $violations | 
-                  .[0] as $first |
-                  
-                  (if $first.severity == 1 then "🔴 Critical"
-                   elif $first.severity == 2 then "🟠 High"
-                   elif $first.severity == 3 then "🟡 Medium"
-                   elif $first.severity == 4 then "🔵 Low"
-                   elif $first.severity == 5 then "⚪ Info"
-                   else "❓ Unknown"
-                   end) as $severity_badge |
-                  
-                  (if $first.rule == "NoTrailingWhitespace" then "Remove Trailing Whitespace"
-                   else $first.rule
-                   end) as $friendly_rule |
-                  
-                  "#### " + $severity_badge + " " + $friendly_rule + " (" + (length | tostring) + " occurrence" + (if length > 1 then "s" else "" end) + ")" +
-                  "\n" +
-                  "**Issue**: " + $first.message +
-                  "\n\n" +
-                  "**Affected locations**:" +
-                  "\n" +
-                  (map(
-                    "- `" + (.fileName // .file // "Unknown") + "` **Line " + (.line // .locations[0].startLine // "?" | tostring) + "**"
-                  ) | join("\n")) +
-                  "\n"
-                ) | join("\n")
-              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "**Failed to parse violations from .violations**" >> $GITHUB_STEP_SUMMARY
+              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "**Failed to parse violations**" >> $GITHUB_STEP_SUMMARY
               
             else
-              echo "### ⚠️ Violations Structure Not Found" >> $GITHUB_STEP_SUMMARY
+              echo "### ⚠️ Summary Only Available" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "Could not locate detailed violation information in the JSON structure." >> $GITHUB_STEP_SUMMARY
+              echo "Detailed violation information could not be parsed, but here's the summary:" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Summary:**" >> $GITHUB_STEP_SUMMARY
               echo "- 🔴 **$critical_count Critical** security/performance issues" >> $GITHUB_STEP_SUMMARY
               echo "- 🟠 **$high_count High** priority issues" >> $GITHUB_STEP_SUMMARY  
               echo "- 🟡 **$medium_count Medium** priority issues" >> $GITHUB_STEP_SUMMARY
               echo "- 🔵 **$low_count Low** priority issues" >> $GITHUB_STEP_SUMMARY
               echo "- ⚪ **$info_count Info** style/formatting issues" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Debug Info - JSON Structure:**" >> $GITHUB_STEP_SUMMARY
-              echo '```json' >> $GITHUB_STEP_SUMMARY
-              echo "Keys in JSON:" >> $GITHUB_STEP_SUMMARY
-              jq 'keys' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to show keys" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "First 10 lines of JSON:" >> $GITHUB_STEP_SUMMARY
-              head -10 sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Failed to show sample" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "Please run the analyzer locally for detailed violation information:" >> $GITHUB_STEP_SUMMARY
+              echo "Please run the Code Analyzer locally for detailed violation information:" >> $GITHUB_STEP_SUMMARY
               echo '```bash' >> $GITHUB_STEP_SUMMARY
               echo 'sf code-analyzer run --view detail --target "force-app/**/*.cls"' >> $GITHUB_STEP_SUMMARY
               echo '```' >> $GITHUB_STEP_SUMMARY
@@ -304,6 +256,8 @@ jobs:
             echo "- ✅ Security best practices" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Performance patterns" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Salesforce platform guidelines" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "_Note: NoTrailingWhitespace violations are automatically excluded from this analysis._" >> $GITHUB_STEP_SUMMARY
           fi
           
           # Console output with friendly formatting
@@ -312,7 +266,7 @@ jobs:
           echo "🔍 CODE QUALITY ANALYSIS COMPLETE"
           echo "════════════════════════════════════════════════════════════════"
           echo ""
-          echo "📊 SUMMARY:"
+          echo "📊 SUMMARY (NoTrailingWhitespace excluded):"
           echo "  🔴 Critical: $critical_count"
           echo "  🟠 High:     $high_count"
           echo "  🟡 Medium:   $medium_count"
