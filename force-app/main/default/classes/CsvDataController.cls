@@ -177,7 +177,6 @@ public with sharing class CsvDataController {
             if (!fileName.toLowerCase().endsWith('.csv')) {
                 throw new AuraHandledException('Only CSV files are allowed.');
             }
-            
             // Decode CSV content
             String csvContent = EncodingUtil.base64Decode(fileContent).toString();
             
