@@ -51,31 +51,65 @@ jobs:
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
           formatted_files=$(echo "$changed_files" | tr ' ' ',')
           
-          # Run analyzer
+          # Run analyzer with JSON format
           sf code-analyzer run \
-            --view detail \
+            --format json \
             --output-file sfca_results_raw.json \
             --target "$formatted_files"
           
           if [ -f sfca_results_raw.json ]; then
             echo "scan-completed=true" >> $GITHUB_OUTPUT
             
-            # Filter out NoTrailingWhitespace and recalculate counts
+            # Debug: Show raw JSON structure
+            echo "=== Raw JSON Structure ==="
+            jq '.' sfca_results_raw.json | head -20
+            
+            # Filter out NoTrailingWhitespace violations and rebuild JSON
             jq '
-              # Filter violations from results
-              .results = (.results // [] | map(
-                .violations = (.violations // [] | map(select(.rule != "NoTrailingWhitespace")))
-              )) |
+              # Handle different possible JSON structures
+              if type == "array" then
+                # If root is array of results
+                map(
+                  if has("violations") then
+                    .violations = (.violations | map(select(.rule != "NoTrailingWhitespace")))
+                  else . end
+                )
+              else
+                # If root is object
+                if has("results") then
+                  # Standard structure with results array
+                  .results = (.results | map(
+                    if has("violations") then
+                      .violations = (.violations | map(select(.rule != "NoTrailingWhitespace")))
+                    else . end
+                  ))
+                elif has("violations") then
+                  # Direct violations in root
+                  .violations = (.violations | map(select(.rule != "NoTrailingWhitespace")))
+                else . end
+              end |
               
-              # Recalculate violation counts by severity
-              (.results // [] | map(.violations // []) | add // []) as $all_violations |
-              .violationCounts = {
-                total: ($all_violations | length),
-                sev1: ($all_violations | map(select(.severity == 1)) | length),
-                sev2: ($all_violations | map(select(.severity == 2)) | length), 
-                sev3: ($all_violations | map(select(.severity == 3)) | length),
-                sev4: ($all_violations | map(select(.severity == 4)) | length),
-                sev5: ($all_violations | map(select(.severity == 5)) | length)
+              # Recalculate violation counts
+              (
+                if type == "array" then
+                  [.[] | .violations // []] | add // []
+                elif has("results") then
+                  [.results[] | .violations // []] | add // []
+                elif has("violations") then
+                  .violations // []
+                else [] end
+              ) as $all_violations |
+              
+              # Add/update violation counts
+              . + {
+                violationCounts: {
+                  total: ($all_violations | length),
+                  sev1: ($all_violations | map(select(.severity == 1)) | length),
+                  sev2: ($all_violations | map(select(.severity == 2)) | length), 
+                  sev3: ($all_violations | map(select(.severity == 3)) | length),
+                  sev4: ($all_violations | map(select(.severity == 4)) | length),
+                  sev5: ($all_violations | map(select(.severity == 5)) | length)
+                }
               }
             ' sfca_results_raw.json > sfca_results.json
             
@@ -84,6 +118,11 @@ jobs:
             echo "num-violations=$total_violations" >> $GITHUB_OUTPUT
             
             echo "Total violations after filtering: $total_violations"
+            
+            # Debug: Show filtered structure
+            echo "=== Filtered Violations ==="
+            jq '.violationCounts' sfca_results.json
+            
           else
             echo "scan-completed=false" >> $GITHUB_OUTPUT
             echo "num-violations=0" >> $GITHUB_OUTPUT
@@ -126,10 +165,21 @@ jobs:
             echo "| Severity | Rule | File | Line | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|------|------|------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
 
-            # Generate detailed violations table
+            # Generate detailed violations table with robust JSON parsing
             jq -r '
-              [.results[]?.violations[]? // empty] |
-              sort_by(.severity, .fileName, (.line // 0)) |
+              # Extract all violations from different possible structures
+              (
+                if type == "array" then
+                  [.[] | .violations // []] | add // []
+                elif has("results") then
+                  [.results[] | .violations // []] | add // []
+                elif has("violations") then
+                  .violations // []
+                else [] end
+              ) |
+              
+              # Sort and format violations
+              sort_by(.severity, .fileName // .location // "", (.line // 0)) |
               map(
                 . as $v |
                 # Get severity badge
@@ -139,20 +189,37 @@ jobs:
                  elif .severity == 4 then "🔵 Low"
                  else "⚪ Info" end) as $sev_badge |
                 
-                # Get rule name
-                (.rule // .ruleId // "Unknown") as $rule |
+                # Get rule name (handle different field names)
+                (.rule // .ruleId // .name // "Unknown") as $rule |
                 
-                # Get file name (remove path for readability)
-                (.fileName // "Unknown" | split("/") | last) as $file |
+                # Get file name - handle different location formats
+                (
+                  if .fileName then .fileName
+                  elif .location then (.location | split("(")[0] | split(" ")[0])
+                  elif .file then .file
+                  else "Unknown" end |
+                  split("/") | last
+                ) as $file |
                 
                 # Get line number
-                (.line // "?") as $line |
+                (
+                  if .line then .line
+                  elif .location then (
+                    .location | 
+                    if test("\\(\\d+:") then
+                      (split("(")[1] | split(":")[0] | tonumber)
+                    else "?" end
+                  )
+                  else "?" end
+                ) as $line |
                 
                 # Clean message
-                (.message // "No message" | gsub("\\n"; " ") | gsub("\\|"; "/")) as $msg |
+                (.message // "No message" | gsub("\\n"; " ") | gsub("\\|"; "/") | .[0:100]) as $msg |
                 
                 # Generate fix suggestion based on rule
-                (if ($rule | test("ApexCRUDViolation")) then "Add CRUD/FLS checks"
+                (if ($rule | test("DebugsShouldUseLoggingLevel")) then "Add logging level to System.debug"
+                 elif ($rule | test("AvoidDebugStatements")) then "Remove debug statements"
+                 elif ($rule | test("ApexCRUDViolation")) then "Add CRUD/FLS checks"
                  elif ($rule | test("AvoidHardcodingId")) then "Use Custom Settings"
                  elif ($rule | test("AvoidDmlStatementsInLoops")) then "Move DML outside loop"
                  elif ($rule | test("AvoidSoqlInLoops")) then "Move SOQL outside loop"
@@ -163,7 +230,9 @@ jobs:
                 
                 "| " + $sev_badge + " | `" + $rule + "` | `" + $file + "` | " + ($line|tostring) + " | " + $msg + " | " + $fix + " |"
               ) | .[]
-            ' sfca_results.json >> $GITHUB_STEP_SUMMARY
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
+              echo "| ⚠️ Error | Parse Failed | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
+            }
 
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 💡 Priority Actions" >> $GITHUB_STEP_SUMMARY
