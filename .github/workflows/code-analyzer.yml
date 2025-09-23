@@ -144,11 +144,11 @@ jobs:
             echo "The following code quality issues were detected (NoTrailingWhitespace excluded):" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Create detailed violation table
-            echo "### 📋 Detailed Violations" >> $GITHUB_STEP_SUMMARY
+            # Create detailed violation table (sorted by severity, then line)
+            echo "<details><summary>📋 Detailed Violations (Click to Expand)</summary>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Severity | Rule | Description | File | Line | Column | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
-            echo "|----------|------|-------------|------|------|--------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Severity | Rule | Description | File | Line | Column | Message | Fix Suggestion | Reference |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|------|-------------|------|------|--------|---------|----------------|------------|" >> $GITHUB_STEP_SUMMARY
 
             # Dump one sample violation (debug) so we can see actual field names if parsing fails
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -158,11 +158,12 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
-            # Robust extraction: support alternative field names (.rule, .ruleId, .name), messages and locations
+            # Robust extraction: support alternative field names (.rule, .ruleId, .name), messages and locations, sorted by severity and line
             jq -r '
               # gather violations from possible locations
-              ( [ (.results[]? | .violations[]?) , (.violations[]?) ] | add // [] ) as $all |
+              ( [ (.results[]? | .violations[]?), (.violations[]?) ] | add // [] ) as $all |
               $all |
+              sort_by(.severity // 5, (.line // 0)) |
               map(
                 . as $vi |
                 # normalize fields (rule, message, file, line, column)
@@ -203,17 +204,22 @@ jobs:
                   elif ($rule | test("UnusedLocalVariable")) then "Remove unused variable"
                   elif ($rule | test("EmptyIfStmt")) then "Add code or remove statement"
                   else "Follow Salesforce best practices" end ) as $fix_suggestion |
+                # reference link (example for common rules; customize as needed)
+                ( if ($rule | test("ApexCRUDViolation")) then "[Salesforce Docs](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_security_crud_fls.htm)"
+                  elif ($rule | test("AvoidHardcodingId")) then "[PMD Rule](https://pmd.github.io/pmd/pmd_rules_apex_bestpractices.html#avoidhardcodingid)"
+                  else "-" end ) as $reference |
                 # build markdown table row
-                "| " + $severity_badge + " | `" + ($rule|gsub("`"; "\\`")) + "` | " + ($description|gsub("\\|"; "/")) + " | `" + ($file|gsub("`"; "\\`")) + "` | " + $line + " | " + $column + " | " + ($message|gsub("\\|"; "/")|gsub("`"; "'")) + " | " + ($fix_suggestion|gsub("\\|"; "/")) + " |"
+                "| " + $severity_badge + " | `" + ($rule|gsub("`"; "\\`")) + "` | " + ($description|gsub("\\|"; "/")) + " | `" + ($file|gsub("`"; "\\`")) + "` | " + $line + " | " + $column + " | " + ($message|gsub("\\|"; "/")|gsub("`"; "'")) + " | " + ($fix_suggestion|gsub("\\|"; "/")) + " | " + $reference + " |"
               ) | .[]
             ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
-              echo "| ⚠️ Error | Parse Failed | - | - | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
+              echo "| ⚠️ Error | Parse Failed | - | - | - | - | Could not parse violation details | Check logs | - |" >> $GITHUB_STEP_SUMMARY
             }
 
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
-            # Add grouped summary by rule type (uses same normalization)
-            echo "### 📊 Summary by Rule Type" >> $GITHUB_STEP_SUMMARY
+            # Add grouped summary by rule type (sorted by count descending)
+            echo "<details><summary>📊 Summary by Rule Type (Click to Expand)</summary>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Rule | Count | Severity | Description |" >> $GITHUB_STEP_SUMMARY
             echo "|------|-------|----------|-------------|" >> $GITHUB_STEP_SUMMARY
@@ -221,6 +227,7 @@ jobs:
             jq -r '
               ( [ (.results[]? | .violations[]?), (.violations[]?) ] | add // [] ) as $all |
               $all | group_by( ( .rule // .ruleId // .name // "Unknown" ) ) |
+              sort_by(-length) |
               map(
                 .[0] as $first |
                 ( ($first.rule // $first.ruleId // $first.name // "Unknown") ) as $rule |
@@ -250,6 +257,7 @@ jobs:
               echo "| Parse Error | - | - | Could not group violations by rule |" >> $GITHUB_STEP_SUMMARY
             }
             
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 💡 Quick Fix Guide" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
