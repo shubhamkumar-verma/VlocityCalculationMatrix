@@ -70,15 +70,27 @@ jobs:
             
             # Filter out NoTrailingWhitespace violations and rebuild JSON
             jq '
-              # Handle array of file results
+              # Handle array of file results and preserve file names
               map(
+                . as $file_result |
                 if has("violations") then
-                  .violations = (.violations | map(select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace")))
+                  .violations = (.violations | map(
+                    select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace") |
+                    if .fileName == null or .fileName == "" then
+                      . + {fileName: $file_result.fileName}
+                    else . end
+                  ))
                 else . end
               ) as $filtered_results |
               
-              # Calculate total violations after filtering
-              ($filtered_results | map(.violations // []) | add // []) as $all_violations |
+              # Calculate total violations after filtering and add file context
+              ($filtered_results | map(
+                .fileName as $file_name |
+                .violations[] | 
+                if .fileName == null or .fileName == "" then
+                  . + {fileName: $file_name}
+                else . end
+              ) // []) as $all_violations |
               
               # Return filtered results with counts
               {
@@ -147,10 +159,29 @@ jobs:
             echo "| Severity | Rule | File | Line | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|------|------|------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
 
-            # Generate detailed violations table
+            # Add debug info to understand file structure
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<!-- Debug: Raw violation structure -->" >> $GITHUB_STEP_SUMMARY
+            jq '.results[0].violations[0] // .allViolations[0] // empty' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "<!-- No debug info -->" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Generate detailed violations table with enhanced file name extraction
             jq -r '
-              .allViolations // [] |
-              sort_by(.severity, .fileName // "", (.line // 0)) |
+              # Get violations and add file context
+              (.results // []) as $results |
+              [
+                $results[] | 
+                .fileName as $file_name |
+                .violations[] | 
+                . + {fileContext: $file_name}
+              ] as $violations_with_context |
+              
+              # If no file context, use allViolations
+              ($violations_with_context + (.allViolations // [])) |
+              
+              # Remove duplicates and sort
+              unique_by(.ruleName + (.line // 0 | tostring) + (.message // "")) |
+              sort_by(.severity, .fileContext // .fileName // "", (.line // 0)) |
               map(
                 . as $v |
                 # Get severity badge
@@ -163,8 +194,16 @@ jobs:
                 # Get rule name (try multiple field names)
                 (.ruleName // .rule // .ruleId // .name // "Unknown") as $rule |
                 
-                # Get file name (clean path)
-                (.fileName // .file // "Unknown" | split("/") | last) as $file |
+                # Enhanced file name extraction
+                (
+                  if .fileContext then .fileContext
+                  elif .fileName then .fileName
+                  elif .file then .file
+                  elif .location then (.location | split("(")[0] | split(" ")[0])
+                  else "File not specified" end |
+                  if . == "" or . == null then "File not specified" 
+                  else (split("/") | last) end
+                ) as $file |
                 
                 # Get line number
                 (.line // "?") as $line |
@@ -174,7 +213,11 @@ jobs:
                  if length > 80 then .[0:77] + "..." else . end) as $msg |
                 
                 # Generate fix suggestion based on rule
-                (if ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
+                (if ($rule | test("no-unused-vars"; "i")) then "Remove unused variable or use it"
+                 elif ($rule | test("ExcessiveClassLength"; "i")) then "Split class into smaller classes"
+                 elif ($rule | test("StdCyclomaticComplexity"; "i")) then "Reduce method complexity"
+                 elif ($rule | test("CognitiveComplexity"; "i")) then "Simplify logic and reduce nesting"
+                 elif ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
                  elif ($rule | test("AvoidDebugStatements"; "i")) then "Remove debug statements"
                  elif ($rule | test("ApexCRUDViolation"; "i")) then "Add CRUD/FLS checks"
                  elif ($rule | test("AvoidHardcodingId"; "i")) then "Use Custom Settings"
