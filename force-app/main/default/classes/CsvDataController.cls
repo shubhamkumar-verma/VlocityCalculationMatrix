@@ -194,6 +194,7 @@ public with sharing class CsvDataController {
             if (parsedCsv.isEmpty()) {
                 throw new AuraHandledException('CSV file is empty or invalid.');
             }
+            
             // Always create a new version for each upload
             String matrixId = calculationMatrixId;
             if (String.isBlank(matrixId)) {
