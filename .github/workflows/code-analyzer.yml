@@ -60,13 +60,9 @@ jobs:
           if [ -f sfca_results_raw.json ]; then
             echo "scan-completed=true" >> $GITHUB_OUTPUT
             
-            # Debug: Show raw JSON structure
+            # Debug: Show raw JSON structure (console only)
             echo "=== Raw JSON Structure ==="
             jq 'keys' sfca_results_raw.json 2>/dev/null || echo "Not valid JSON or jq failed"
-            
-            # Show first violation for structure analysis
-            echo "=== Sample Violation ==="
-            jq '.[] | select(.violations) | .violations[0] // empty' sfca_results_raw.json 2>/dev/null | head -10
             
             # Filter out NoTrailingWhitespace violations and rebuild JSON
             jq '
@@ -76,21 +72,13 @@ jobs:
                 if has("violations") then
                   .violations = (.violations | map(
                     select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace") |
-                    if .fileName == null or .fileName == "" then
-                      . + {fileName: $file_result.fileName}
-                    else . end
+                    . + {fileName: $file_result.fileName}
                   ))
                 else . end
               ) as $filtered_results |
               
-              # Calculate total violations after filtering and add file context
-              ($filtered_results | map(
-                .fileName as $file_name |
-                .violations[] | 
-                if .fileName == null or .fileName == "" then
-                  . + {fileName: $file_name}
-                else . end
-              ) // []) as $all_violations |
+              # Calculate total violations after filtering
+              ($filtered_results | map(.violations // []) | add // []) as $all_violations |
               
               # Return filtered results with counts
               {
@@ -112,10 +100,6 @@ jobs:
             echo "num-violations=$total_violations" >> $GITHUB_OUTPUT
             
             echo "Total violations after filtering: $total_violations"
-            
-            # Debug: Show filtered structure
-            echo "=== Filtered Violation Counts ==="
-            jq '.violationCounts' sfca_results.json
             
           else
             echo "scan-completed=false" >> $GITHUB_OUTPUT
@@ -159,29 +143,12 @@ jobs:
             echo "| Severity | Rule | File | Line | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|------|------|------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
 
-            # Add debug info to understand file structure
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "<!-- Debug: Raw violation structure -->" >> $GITHUB_STEP_SUMMARY
-            jq '.results[0].violations[0] // .allViolations[0] // empty' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "<!-- No debug info -->" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-
-            # Generate detailed violations table with enhanced file name extraction
+            # Generate clean detailed violations table
             jq -r '
-              # Get violations and add file context
-              (.results // []) as $results |
-              [
-                $results[] | 
-                .fileName as $file_name |
-                .violations[] | 
-                . + {fileContext: $file_name}
-              ] as $violations_with_context |
-              
-              # If no file context, use allViolations
-              ($violations_with_context + (.allViolations // [])) |
-              
-              # Remove duplicates and sort
-              unique_by(.ruleName + (.line // 0 | tostring) + (.message // "")) |
-              sort_by(.severity, .fileContext // .fileName // "", (.line // 0)) |
+              .allViolations // [] |
+              # Remove duplicates based on rule + line + file
+              unique_by(.ruleName + (.line // 0 | tostring) + (.fileName // "")) |
+              sort_by(.severity, (.fileName // ""), (.line // 0)) |
               map(
                 . as $v |
                 # Get severity badge
@@ -191,51 +158,50 @@ jobs:
                  elif .severity == 4 then "🔵 Low"
                  else "⚪ Info" end) as $sev_badge |
                 
-                # Get rule name (try multiple field names)
-                (.ruleName // .rule // .ruleId // .name // "Unknown") as $rule |
+                # Get rule name
+                (.ruleName // .rule // "Unknown") as $rule |
                 
-                # Enhanced file name extraction
+                # Clean file name - extract just the filename from full path
                 (
-                  if .fileContext then .fileContext
-                  elif .fileName then .fileName
-                  elif .file then .file
-                  elif .location then (.location | split("(")[0] | split(" ")[0])
-                  else "File not specified" end |
-                  if . == "" or . == null then "File not specified" 
-                  else (split("/") | last) end
+                  (.fileName // "Unknown") | 
+                  if . == "" or . == null then "Unknown"
+                  else 
+                    # Split by / and take last part (filename)
+                    split("/") | last |
+                    # If it contains .cls, .trigger etc, keep it as is
+                    # Otherwise show "Unknown"
+                    if test("\\.(cls|trigger|cmp|js|css|html)$") then . else "Unknown" end
+                  end
                 ) as $file |
                 
                 # Get line number
                 (.line // "?") as $line |
                 
-                # Clean message (truncate if too long)
-                (.message // "No message" | gsub("\\n"; " ") | gsub("\\|"; "/") | 
-                 if length > 80 then .[0:77] + "..." else . end) as $msg |
+                # Clean message (truncate if too long and remove newlines)
+                (.message // "No message" | 
+                 gsub("\\\\n"; " ") | gsub("\\n"; " ") | gsub("\\|"; "/") | 
+                 if length > 100 then .[0:97] + "..." else . end) as $msg |
                 
                 # Generate fix suggestion based on rule
                 (if ($rule | test("no-unused-vars"; "i")) then "Remove unused variable or use it"
                  elif ($rule | test("ExcessiveClassLength"; "i")) then "Split class into smaller classes"
                  elif ($rule | test("StdCyclomaticComplexity"; "i")) then "Reduce method complexity"
                  elif ($rule | test("CognitiveComplexity"; "i")) then "Simplify logic and reduce nesting"
-                 elif ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
-                 elif ($rule | test("AvoidDebugStatements"; "i")) then "Remove debug statements"
+                 elif ($rule | test("CyclomaticComplexity"; "i")) then "Reduce method complexity"
                  elif ($rule | test("ApexCRUDViolation"; "i")) then "Add CRUD/FLS checks"
+                 elif ($rule | test("AvoidDebugStatements"; "i")) then "Remove debug statements"
+                 elif ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
                  elif ($rule | test("AvoidHardcodingId"; "i")) then "Use Custom Settings"
                  elif ($rule | test("AvoidDmlStatementsInLoops"; "i")) then "Move DML outside loop"
                  elif ($rule | test("AvoidSoqlInLoops"; "i")) then "Move SOQL outside loop"
-                 elif ($rule | test("CyclomaticComplexity"; "i")) then "Reduce method complexity"
                  elif ($rule | test("UnusedLocalVariable"; "i")) then "Remove unused variable"
                  elif ($rule | test("EmptyIfStmt"; "i")) then "Add logic or remove"
-                 elif ($rule | test("NcssMethodCount"; "i")) then "Break method into smaller parts"
-                 elif ($rule | test("NcssTypeCount"; "i")) then "Split class into smaller classes"
                  else "Follow Salesforce best practices" end) as $fix |
                 
                 "| " + $sev_badge + " | `" + $rule + "` | `" + $file + "` | " + ($line|tostring) + " | " + $msg + " | " + $fix + " |"
               ) | .[]
             ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
               echo "| ⚠️ Error | Parse Failed | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Debug Info:** Check the console output for JSON structure details." >> $GITHUB_STEP_SUMMARY
             }
 
             echo "" >> $GITHUB_STEP_SUMMARY
