@@ -207,7 +207,6 @@ public with sharing class CsvDataController {
             ];
             // Always get the next available version number
             Integer nextVersion = getNextAvailableVersionNumber(matrixId);
-            
             // Create version name using Calculation Matrix name + version number
             String versionName = calculationMatrix.Name + ' V' + nextVersion;
             
