@@ -425,7 +425,6 @@ export default class CsvDataViewer extends LightningElement {
             console.log('Created Matrix Version ID:', this.matrixVersionId);
             // Load first page of data
             await this.loadMatrixData();
-            
             this.showToast('Success', `Matrix Version saved successfully with your edits!`, 'success');
         } catch (error) {
             console.error('Save version error:', error);
