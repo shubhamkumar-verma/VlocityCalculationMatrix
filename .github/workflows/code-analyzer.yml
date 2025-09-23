@@ -24,9 +24,9 @@ jobs:
       - name: 'Install Salesforce CLI'
         run: npm install -g @salesforce/cli@latest
 
-      # Install Code Analyzer Plugin v5.x
+      # Install Code Analyzer Plugin
       - name: 'Install Salesforce Code Analyzer Plugin'
-        run: sf plugins install code-analyzer@latest
+        run: sf plugins install @salesforce/sfdx-scanner@latest
 
       # Get changed files
       - name: 'Get changed files in PR'
@@ -51,10 +51,10 @@ jobs:
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
           formatted_files=$(echo "$changed_files" | tr ' ' ',')
           
-          # Run analyzer with v5.x syntax
-          sf code-analyzer run \
+          # Run analyzer with correct syntax
+          sf scanner run \
             --target "$formatted_files" \
-            --output-file sfca_results_raw.json \
+            --outfile sfca_results_raw.json \
             --format json
           
           if [ -f sfca_results_raw.json ]; then
@@ -62,65 +62,37 @@ jobs:
             
             # Debug: Show raw JSON structure
             echo "=== Raw JSON Structure ==="
-            jq 'type' sfca_results_raw.json 2>/dev/null || echo "Not valid JSON"
-            jq 'if type == "array" then length else keys end' sfca_results_raw.json 2>/dev/null
+            jq 'keys' sfca_results_raw.json 2>/dev/null || echo "Not valid JSON or jq failed"
             
-            # Show sample violation structure
-            echo "=== Sample Violation Structure ==="
-            jq 'if type == "array" then .[0] | keys else . | keys end' sfca_results_raw.json 2>/dev/null
+            # Show first violation for structure analysis
+            echo "=== Sample Violation ==="
+            jq '.[] | select(.violations) | .violations[0] // empty' sfca_results_raw.json 2>/dev/null | head -10
             
             # Filter out NoTrailingWhitespace violations and rebuild JSON
             jq '
-              # Check if root is array (v5.x format) or object
-              if type == "array" then
-                # v5.x: Array of file results
-                map(
-                  if has("violations") then
-                    .violations = (.violations | map(select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace")))
-                  else . end
-                ) as $filtered_results |
-                
-                # Calculate total violations after filtering
-                ($filtered_results | map(.violations // []) | add // []) as $all_violations |
-                
-                # Return structured object for easier processing
-                {
-                  results: $filtered_results,
-                  violationCounts: {
-                    total: ($all_violations | length),
-                    sev1: ($all_violations | map(select(.severity == 1)) | length),
-                    sev2: ($all_violations | map(select(.severity == 2)) | length), 
-                    sev3: ($all_violations | map(select(.severity == 3)) | length),
-                    sev4: ($all_violations | map(select(.severity == 4)) | length),
-                    sev5: ($all_violations | map(select(.severity == 5)) | length)
-                  },
-                  allViolations: $all_violations
-                }
-              else
-                # v4.x: Object structure - keep as is but filter violations
-                . as $root |
-                if has("results") then
-                  .results = (.results | map(
-                    if has("violations") then
-                      .violations = (.violations | map(select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace")))
-                    else . end
-                  )) |
-                  
-                  # Recalculate counts
-                  ([.results[] | .violations // []] | add // []) as $all_violations |
-                  .violationCounts = {
-                    total: ($all_violations | length),
-                    sev1: ($all_violations | map(select(.severity == 1)) | length),
-                    sev2: ($all_violations | map(select(.severity == 2)) | length), 
-                    sev3: ($all_violations | map(select(.severity == 3)) | length),
-                    sev4: ($all_violations | map(select(.severity == 4)) | length),
-                    sev5: ($all_violations | map(select(.severity == 5)) | length)
-                  } |
-                  .allViolations = $all_violations
-                else
-                  . + { violationCounts: { total: 0, sev1: 0, sev2: 0, sev3: 0, sev4: 0, sev5: 0 }, allViolations: [] }
-                end
-              end
+              # Handle array of file results
+              map(
+                if has("violations") then
+                  .violations = (.violations | map(select(.ruleName != "NoTrailingWhitespace" and .rule != "NoTrailingWhitespace")))
+                else . end
+              ) as $filtered_results |
+              
+              # Calculate total violations after filtering
+              ($filtered_results | map(.violations // []) | add // []) as $all_violations |
+              
+              # Return filtered results with counts
+              {
+                results: $filtered_results,
+                violationCounts: {
+                  total: ($all_violations | length),
+                  sev1: ($all_violations | map(select(.severity == 1)) | length),
+                  sev2: ($all_violations | map(select(.severity == 2)) | length), 
+                  sev3: ($all_violations | map(select(.severity == 3)) | length),
+                  sev4: ($all_violations | map(select(.severity == 4)) | length),
+                  sev5: ($all_violations | map(select(.severity == 5)) | length)
+                },
+                allViolations: $all_violations
+              }
             ' sfca_results_raw.json > sfca_results.json
             
             # Get filtered counts
@@ -132,10 +104,6 @@ jobs:
             # Debug: Show filtered structure
             echo "=== Filtered Violation Counts ==="
             jq '.violationCounts' sfca_results.json
-            
-            # Debug: Show sample filtered violation
-            echo "=== Sample Filtered Violation ==="
-            jq '.allViolations[0] // "No violations"' sfca_results.json 2>/dev/null
             
           else
             echo "scan-completed=false" >> $GITHUB_OUTPUT
@@ -153,12 +121,12 @@ jobs:
           
           total_violations=${{ steps.scan-step.outputs.num-violations }}
           
-          # Get violation counts with fallback
-          critical_count=$(jq '.violationCounts.sev1 // 0' sfca_results.json)
-          high_count=$(jq '.violationCounts.sev2 // 0' sfca_results.json)
-          medium_count=$(jq '.violationCounts.sev3 // 0' sfca_results.json)
-          low_count=$(jq '.violationCounts.sev4 // 0' sfca_results.json)
-          info_count=$(jq '.violationCounts.sev5 // 0' sfca_results.json)
+          # Get violation counts
+          critical_count=$(jq '.violationCounts.sev1' sfca_results.json)
+          high_count=$(jq '.violationCounts.sev2' sfca_results.json)
+          medium_count=$(jq '.violationCounts.sev3' sfca_results.json)
+          low_count=$(jq '.violationCounts.sev4' sfca_results.json)
+          info_count=$(jq '.violationCounts.sev5' sfca_results.json)
           
           # Summary table
           echo "## 📊 Violation Summary" >> $GITHUB_STEP_SUMMARY
@@ -179,57 +147,53 @@ jobs:
             echo "| Severity | Rule | File | Line | Message | Fix Suggestion |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|------|------|------|---------|----------------|" >> $GITHUB_STEP_SUMMARY
 
-            # Check if violations exist and generate table
-            violation_count=$(jq '.allViolations | length' sfca_results.json 2>/dev/null || echo "0")
-            
-            if [ "$violation_count" -gt 0 ]; then
-              # Generate detailed violations table
-              jq -r '
-                .allViolations // [] |
-                sort_by(.severity, .fileName // "", (.line // 0)) |
-                map(
-                  . as $v |
-                  # Get severity badge
-                  (if .severity == 1 then "🔴 Critical"
-                   elif .severity == 2 then "🟠 High" 
-                   elif .severity == 3 then "🟡 Medium"
-                   elif .severity == 4 then "🔵 Low"
-                   else "⚪ Info" end) as $sev_badge |
-                  
-                  # Get rule name (try multiple field names)
-                  (.ruleName // .rule // .ruleId // .name // "Unknown") as $rule |
-                  
-                  # Get file name (clean path)
-                  (.fileName // .file // "Unknown" | split("/") | last) as $file |
-                  
-                  # Get line number
-                  (.line // "?") as $line |
-                  
-                  # Clean message (truncate if too long)
-                  (.message // "No message" | gsub("\\n"; " ") | gsub("\\|"; "/") | gsub("\\t"; " ") |
-                   if length > 100 then .[0:97] + "..." else . end) as $msg |
-                  
-                  # Generate fix suggestion based on rule
-                  (if ($rule | test("ExcessiveClassLength"; "i")) then "Split class into smaller classes"
-                   elif ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
-                   elif ($rule | test("AvoidDebugStatements"; "i")) then "Remove debug statements"
-                   elif ($rule | test("ApexCRUDViolation"; "i")) then "Add CRUD/FLS checks"
-                   elif ($rule | test("AvoidHardcodingId"; "i")) then "Use Custom Settings"
-                   elif ($rule | test("AvoidDmlStatementsInLoops"; "i")) then "Move DML outside loop"
-                   elif ($rule | test("AvoidSoqlInLoops"; "i")) then "Move SOQL outside loop"
-                   elif ($rule | test("CyclomaticComplexity"; "i")) then "Reduce method complexity"
-                   elif ($rule | test("UnusedLocalVariable"; "i")) then "Remove unused variable"
-                   elif ($rule | test("EmptyIfStmt"; "i")) then "Add logic or remove"
-                   elif ($rule | test("NcssMethodCount"; "i")) then "Break method into smaller parts"
-                   elif ($rule | test("NcssTypeCount"; "i")) then "Split class into smaller classes"
-                   else "Follow Salesforce best practices" end) as $fix |
-                  
-                  "| " + $sev_badge + " | `" + $rule + "` | `" + $file + "` | " + ($line|tostring) + " | " + $msg + " | " + $fix + " |"
-                ) | .[]
-              ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null
-            else
+            # Generate detailed violations table
+            jq -r '
+              .allViolations // [] |
+              sort_by(.severity, .fileName // "", (.line // 0)) |
+              map(
+                . as $v |
+                # Get severity badge
+                (if .severity == 1 then "🔴 Critical"
+                 elif .severity == 2 then "🟠 High" 
+                 elif .severity == 3 then "🟡 Medium"
+                 elif .severity == 4 then "🔵 Low"
+                 else "⚪ Info" end) as $sev_badge |
+                
+                # Get rule name (try multiple field names)
+                (.ruleName // .rule // .ruleId // .name // "Unknown") as $rule |
+                
+                # Get file name (clean path)
+                (.fileName // .file // "Unknown" | split("/") | last) as $file |
+                
+                # Get line number
+                (.line // "?") as $line |
+                
+                # Clean message (truncate if too long)
+                (.message // "No message" | gsub("\\n"; " ") | gsub("\\|"; "/") | 
+                 if length > 80 then .[0:77] + "..." else . end) as $msg |
+                
+                # Generate fix suggestion based on rule
+                (if ($rule | test("DebugsShouldUseLoggingLevel"; "i")) then "Add logging level to System.debug"
+                 elif ($rule | test("AvoidDebugStatements"; "i")) then "Remove debug statements"
+                 elif ($rule | test("ApexCRUDViolation"; "i")) then "Add CRUD/FLS checks"
+                 elif ($rule | test("AvoidHardcodingId"; "i")) then "Use Custom Settings"
+                 elif ($rule | test("AvoidDmlStatementsInLoops"; "i")) then "Move DML outside loop"
+                 elif ($rule | test("AvoidSoqlInLoops"; "i")) then "Move SOQL outside loop"
+                 elif ($rule | test("CyclomaticComplexity"; "i")) then "Reduce method complexity"
+                 elif ($rule | test("UnusedLocalVariable"; "i")) then "Remove unused variable"
+                 elif ($rule | test("EmptyIfStmt"; "i")) then "Add logic or remove"
+                 elif ($rule | test("NcssMethodCount"; "i")) then "Break method into smaller parts"
+                 elif ($rule | test("NcssTypeCount"; "i")) then "Split class into smaller classes"
+                 else "Follow Salesforce best practices" end) as $fix |
+                
+                "| " + $sev_badge + " | `" + $rule + "` | `" + $file + "` | " + ($line|tostring) + " | " + $msg + " | " + $fix + " |"
+              ) | .[]
+            ' sfca_results.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || {
               echo "| ⚠️ Error | Parse Failed | - | - | Could not parse violation details | Check logs |" >> $GITHUB_STEP_SUMMARY
-            fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Debug Info:** Check the console output for JSON structure details." >> $GITHUB_STEP_SUMMARY
+            }
 
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 💡 Priority Actions" >> $GITHUB_STEP_SUMMARY
@@ -261,8 +225,8 @@ jobs:
         if: ${{ steps.scan-step.outputs.scan-completed == 'true' }}
         run: |
           total_violations=${{ steps.scan-step.outputs.num-violations }}
-          critical_count=$(jq '.violationCounts.sev1 // 0' sfca_results.json)
-          high_count=$(jq '.violationCounts.sev2 // 0' sfca_results.json)
+          critical_count=$(jq '.violationCounts.sev1' sfca_results.json)
+          high_count=$(jq '.violationCounts.sev2' sfca_results.json)
           
           echo "🔍 Analysis Results:"
           echo "  Critical: $critical_count | High: $high_count | Total: $total_violations"
