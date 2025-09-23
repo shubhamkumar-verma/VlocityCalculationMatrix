@@ -188,7 +188,6 @@ public with sharing class CsvDataController {
             
             // Decode CSV content
             String csvContent = EncodingUtil.base64Decode(fileContent).toString();
-            
             // Parse CSV
             List<List<String>> parsedCsv = parseCSV(csvContent);
             if (parsedCsv.isEmpty()) {
