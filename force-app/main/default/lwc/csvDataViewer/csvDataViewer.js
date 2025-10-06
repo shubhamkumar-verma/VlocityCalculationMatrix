@@ -434,7 +434,6 @@ export default class CsvDataViewer extends LightningElement {
             this.isLoading = false;
         }
     }
-
     /**
      * Handle cancel preview
      */

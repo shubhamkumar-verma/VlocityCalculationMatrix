@@ -188,16 +188,19 @@ public with sharing class CsvDataController {
             
             // Decode CSV content
             String csvContent = EncodingUtil.base64Decode(fileContent).toString();
+            
             // Parse CSV
             List<List<String>> parsedCsv = parseCSV(csvContent);
             if (parsedCsv.isEmpty()) {
                 throw new AuraHandledException('CSV file is empty or invalid.');
             }
+            
             // Always create a new version for each upload
             String matrixId = calculationMatrixId;
             if (String.isBlank(matrixId)) {
                 matrixId = getOrCreateCalculationMatrix(matrixName);
             }
+            
             // Get the Calculation Matrix record to fetch its name
             vlocity_ins__CalculationMatrix__c calculationMatrix = [
                 SELECT Id, Name
@@ -205,6 +208,7 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixId 
                 LIMIT 1
             ];
+            
             // Always get the next available version number
             Integer nextVersion = getNextAvailableVersionNumber(matrixId);
             
