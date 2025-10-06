@@ -208,7 +208,6 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixId 
                 LIMIT 1
             ];
-            
             // Always get the next available version number
             Integer nextVersion = getNextAvailableVersionNumber(matrixId);
             
@@ -270,7 +269,6 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error deleting matrix version: ' + e.getMessage());
         }
     }
-    
     /**
      * @description Enable/Disable Calculation Matrix Version
      * @param matrixVersionId ID of the CalculationMatrixVersion
