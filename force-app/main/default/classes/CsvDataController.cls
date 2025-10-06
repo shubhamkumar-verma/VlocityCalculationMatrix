@@ -270,7 +270,6 @@ public with sharing class CsvDataController {
             throw new AuraHandledException('Error deleting matrix version: ' + e.getMessage());
         }
     }
-    
     /**
      * @description Enable/Disable Calculation Matrix Version
      * @param matrixVersionId ID of the CalculationMatrixVersion
