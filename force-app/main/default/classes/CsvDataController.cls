@@ -208,7 +208,6 @@ public with sharing class CsvDataController {
                 WHERE Id = :matrixId 
                 LIMIT 1
             ];
-            
             // Always get the next available version number
             Integer nextVersion = getNextAvailableVersionNumber(matrixId);
             
