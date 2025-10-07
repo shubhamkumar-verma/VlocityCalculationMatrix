@@ -223,7 +223,6 @@ public with sharing class CsvDataController {
             matrixVersion.vlocity_ins__StartDateTime__c = System.now();
             matrixVersion.vlocity_ins__EndDateTime__c = System.now().addYears(1);
             matrixVersion.vlocity_ins__Priority__c = nextVersion; // Set Priority to match Version Number
-            
             insert matrixVersion;
             System.debug('Created new CalculationMatrixVersion: ' + matrixVersion.Id);
             
