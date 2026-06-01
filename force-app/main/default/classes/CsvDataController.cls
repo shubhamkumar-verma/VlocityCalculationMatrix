@@ -99,7 +99,6 @@ public with sharing class CsvDataController {
             if (pageNumber == null || pageNumber <= 0) {
                 pageNumber = 1;
             }
-            
             // Get the matrix version record
             vlocity_ins__CalculationMatrixVersion__c matrixVersion = [
                 SELECT Id, Name, vlocity_ins__VersionNumber__c, vlocity_ins__CalculationMatrixId__c,
@@ -162,7 +161,6 @@ public with sharing class CsvDataController {
             response.isEnabled = matrixVersion.vlocity_ins__IsEnabled__c;
             
             return response;
-            
         } catch (Exception e) {
             System.debug('Error in getMatrixCsvData: ' + e.getMessage());
             System.debug('Stack trace: ' + e.getStackTraceString());
